@@ -4,7 +4,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(4000),
   WEB_ORIGIN: z.string().url(),
-  /** When true, serve built SPA from apps/web/dist (standalone single-server deployment). */
+  /** When true, serve built SPA from ../frontend/dist (optional combined deploy). */
   SERVE_WEB: z
     .string()
     .optional()

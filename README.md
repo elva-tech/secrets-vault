@@ -1,56 +1,42 @@
-# Secrets Vault by ELVA — Phase 1
+# Secrets Vault by ELVA
 
-Secure multi-tenant platform: Phase 1–3 (foundation, applications/environments, encrypted vault secrets and files).
+Multi-tenant secrets platform. Deploy **backend** and **frontend** separately.
 
-## Prerequisites
+## Layout
 
-- Node.js 20+
-- MongoDB (local or Atlas)
+| Folder | Deploy to | Purpose |
+|--------|-----------|---------|
+| `backend/` | [Render](https://render.com) (Web Service, root dir `backend`) | Express API + MongoDB |
+| `frontend/` | [Vercel](https://vercel.com) (root dir `frontend`) | React UI |
 
-## Setup
+Repo root only holds shared docs, optional local `.env`, and `npm run dev` helpers.
 
-```bash
-cp .env.example .env
-# Set MONGODB_URI (Atlas or mongodb://127.0.0.1:27017/secrets_vault) and SESSION_SECRET (min 32 chars)
-# Optional overrides: apps/api/.env
-
-npm install
-npm run build --workspace @vault/shared
-```
-
-## Development
+## Local development
 
 ```bash
-# Terminal 1 — API
-npm run dev
+# Optional: copy env for backend
+cp backend/.env.example backend/.env
+# Or keep a single repo-root .env (backend loads repo root then backend/.env)
+
+npm install          # root dev tools (concurrently)
+cd backend && npm install && cd ..
+cd frontend && npm install && cd ..
+
+npm run dev          # API :4000 + Vite :5173
 ```
 
-Open **http://localhost:5173** (not port 3000). The UI proxies `/api` to the API on port 4000.
+Open **tenant/platform hostnames**, not bare `localhost` — e.g. `http://elva.vault.localhost:5173` or `http://vault.localhost:5173`.
 
-Or run separately:
+## Production
 
-```bash
-npm run dev:api
-npm run dev:web
-```
+**Render (backend):** Connect repo, set **Root Directory** to `backend`, build `npm install && npm run build`, start `npm start`. See `backend/render.yaml` and `backend/.env.example`.
 
-Configure `apps/web/.env` optionally:
+**Vercel (frontend):** Root Directory `frontend`. Set `VITE_API_BASE_URL` to your Render API URL. Set backend `WEB_ORIGIN` to your Vercel URL.
 
-```env
-VITE_API_PROXY_TARGET=http://127.0.0.1:4000
-VITE_DEV_TENANT_HOST=elva.vault.localhost
-```
-
-Set `VAULT_BASE_DOMAIN` in API `.env` to match (e.g. `vault.localhost`).
+**DNS:** `VAULT_BASE_DOMAIN` + `*.{VAULT_BASE_DOMAIN}` → frontend (and API if same host) per your architecture; tenant context is resolved from hostname.
 
 ## Tests
 
 ```bash
-npm test
+npm run test
 ```
-
-## Architecture
-
-Modular monolith under `apps/api/src/modules/` with controller → middleware (auth, tenant, authorization) → service → repository layering.
-
-Phase 2+ modules (`vault`, `applications`, `otp`, etc.) have reserved boundaries; only Phase 1 modules are implemented.

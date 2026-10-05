@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { apiFetch } from '../api/client';
+import { apiFetch, apiUrl } from '../api/client';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Modal } from '../components/Modal';
 import { useToast } from '../notifications/ToastContext';
@@ -141,7 +141,7 @@ export function PersonalVaultPage() {
     const data = new FormData();
     data.append('file', fileInput.files[0]);
     data.append('name', fileInput.files[0].name);
-    const res = await fetch('/api/personal-vault/files', {
+    const res = await fetch(apiUrl('/api/personal-vault/files'), {
       method: 'POST',
       credentials: 'include',
       body: data,
@@ -206,7 +206,7 @@ export function PersonalVaultPage() {
               {files.map((f) => (
                 <li key={f.id}>
                   {f.name} ({f.size} bytes){' '}
-                  <a href={`/api/personal-vault/files/${f.id}/download`}>Download</a>
+                  <a href={apiUrl(`/api/personal-vault/files/${f.id}/download`)}>Download</a>
                   <button type="button" className="danger-text" onClick={() => setDeleteFileId(f.id)}>
                     Delete
                   </button>

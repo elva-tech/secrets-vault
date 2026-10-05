@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { apiUrl } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 
 /**
@@ -12,7 +13,7 @@ export function DevContextBanner() {
     if (!import.meta.env.DEV) return;
     const host = window.location.hostname;
     if (host === 'localhost' || host === '127.0.0.1') return;
-    void fetch('/api/config/public', { credentials: 'include' })
+    void fetch(apiUrl('/api/config/public'), { credentials: 'include' })
       .then((r) => r.json())
       .then((r: { baseDomain?: string }) => setBaseDomain(r.baseDomain ?? null))
       .catch(() => setBaseDomain(null));

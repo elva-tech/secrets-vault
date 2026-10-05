@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { apiFetch } from '../api/client';
+import { apiFetch, apiUrl } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Modal } from '../components/Modal';
@@ -307,7 +307,7 @@ export function ApplicationVaultPage() {
     const data = new FormData();
     data.append('file', fileInput.files[0]);
     data.append('name', fileInput.files[0].name);
-    const res = await fetch(`/api/vault/applications/${applicationId}/environments/${envId}/files`, {
+    const res = await fetch(apiUrl(`/api/vault/applications/${applicationId}/environments/${envId}/files`), {
       method: 'POST',
       credentials: 'include',
       body: data,
@@ -502,7 +502,7 @@ export function ApplicationVaultPage() {
             {files.map((f) => (
               <li key={f.id}>
                 {f.name} ({f.size} bytes){' '}
-                <a href={`/api/vault/files/${f.id}/download`}>Download</a>
+                <a href={apiUrl(`/api/vault/files/${f.id}/download`)}>Download</a>
                 {canDeleteFile && (
                   <button
                     type="button"

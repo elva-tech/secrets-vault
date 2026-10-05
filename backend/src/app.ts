@@ -84,7 +84,7 @@ export function createApp(): express.Application {
   app.use('/api', createAuditRouter());
 
   if (env.SERVE_WEB) {
-    const webDist = path.join(fileURLToPath(new URL('.', import.meta.url)), '../../web/dist');
+    const webDist = path.join(fileURLToPath(new URL('.', import.meta.url)), '../../../frontend/dist');
     app.use(express.static(webDist));
     app.get('*', (req, res, next) => {
       if (req.path.startsWith('/api')) {
