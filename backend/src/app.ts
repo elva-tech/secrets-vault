@@ -2,8 +2,10 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import { createRateLimiter } from './http/middleware/rate-limit.middleware.js';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { logger } from './config/logger.js';
 import { loadEnv } from './config/env.js';
 import { isAllowedWebOrigin } from './http/utils/cors-origin.js';
 import { requestIdMiddleware } from './http/middleware/request-id.middleware.js';
@@ -83,15 +85,30 @@ export function createApp(): express.Application {
 
   if (env.SERVE_WEB) {
     const webDist = path.join(fileURLToPath(new URL('.', import.meta.url)), '../../../frontend/dist');
-    app.use(express.static(webDist));
-    app.get('*', (req, res, next) => {
-      if (req.path.startsWith('/api')) {
-        next();
-        return;
-      }
-      res.sendFile(path.join(webDist, 'index.html'), (err) => {
-        if (err) next(err);
+    const indexHtml = path.join(webDist, 'index.html');
+    if (fs.existsSync(indexHtml)) {
+      app.use(express.static(webDist));
+      app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api')) {
+          next();
+          return;
+        }
+        res.sendFile(indexHtml, (err) => {
+          if (err) next(err);
+        });
       });
+    } else {
+      logger.warn(
+        'SERVE_WEB is enabled but frontend build is missing; API-only mode. On Render + Vercel, unset SERVE_WEB.',
+        { webDist },
+      );
+      app.get('/', (_req, res) => {
+        res.json({ service: 'secrets-vault-api', health: '/api/health' });
+      });
+    }
+  } else {
+    app.get('/', (_req, res) => {
+      res.json({ service: 'secrets-vault-api', health: '/api/health' });
     });
   }
 

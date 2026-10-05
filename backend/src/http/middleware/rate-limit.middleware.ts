@@ -15,6 +15,8 @@ export function createRateLimiter(options: Partial<Options>): RateLimitRequestHa
     ...rest,
     validate: {
       xForwardedForHeader: false,
+      /** Global + route limiters both run on login; default validation throws 500 on Render. */
+      singleCount: false,
       ...validateOverrides,
     },
   });

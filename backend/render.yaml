@@ -9,6 +9,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: SERVE_WEB
+        value: "false"
       - key: WEB_ORIGIN
         sync: false
       - key: VAULT_BASE_DOMAIN
