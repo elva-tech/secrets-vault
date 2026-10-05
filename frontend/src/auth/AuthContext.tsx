@@ -21,7 +21,7 @@ export type MeResponse = {
 type AuthState = {
   me: MeResponse | null;
   loading: boolean;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<MeResponse | null>;
   logout: () => Promise<void>;
 };
 
@@ -35,8 +35,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await apiFetch<MeResponse>('/api/auth/me');
       setMe(data);
+      return data;
     } catch {
       setMe(null);
+      return null;
     } finally {
       setLoading(false);
     }

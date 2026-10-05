@@ -98,5 +98,11 @@ export function setSessionCookie(res: Response, sessionId: string): void {
 }
 
 export function clearSessionCookie(res: Response): void {
-  res.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
+  const opts = sessionCookieOptions();
+  res.clearCookie(SESSION_COOKIE_NAME, {
+    path: opts.path,
+    httpOnly: opts.httpOnly,
+    secure: opts.secure,
+    sameSite: opts.sameSite,
+  });
 }

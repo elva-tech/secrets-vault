@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { loadEnv } from '../../config/env.js';
-import { isTrustedBrowserOrigin } from '../utils/cors-origin.js';
+import { isTrustedBrowserRequest } from '../utils/cors-origin.js';
 import { HostnameTenantResolverService } from '../../modules/tenant/services/hostname-tenant-resolver.service.js';
 
 let resolver: HostnameTenantResolverService | null = null;
@@ -22,8 +22,9 @@ export function getRequestHostname(req: Request): string {
   if (typeof vaultHost === 'string' && vaultHost.trim()) {
     const trusted =
       env.NODE_ENV !== 'production' ||
-      isTrustedBrowserOrigin(
+      isTrustedBrowserRequest(
         typeof req.headers.origin === 'string' ? req.headers.origin : undefined,
+        typeof req.headers.referer === 'string' ? req.headers.referer : undefined,
         env,
       );
     if (trusted) {

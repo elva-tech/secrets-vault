@@ -64,7 +64,13 @@ export function LoginPage() {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
-      await refresh();
+      const session = await refresh();
+      if (!session) {
+        setError(
+          'Signed in but session was not saved. Use same-origin API (remove VITE_API_BASE_URL on Vercel and redeploy) or set SESSION_COOKIE_SAMESITE=none on Render.',
+        );
+        return;
+      }
       navigate(mode === 'platform' ? '/platform' : '/tenant', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');

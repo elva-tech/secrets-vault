@@ -17,5 +17,7 @@ services:
         sync: false
       - key: SESSION_SECRET
         generateValue: true
+      - key: SESSION_COOKIE_SAMESITE
+        value: none
       - key: VAULT_ENCRYPTION_MASTER_KEY
         sync: false

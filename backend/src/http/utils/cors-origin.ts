@@ -6,6 +6,21 @@ export function isTrustedBrowserOrigin(origin: string | undefined, env: Env): bo
   return isAllowedWebOrigin(origin, env);
 }
 
+/** Origin or Referer from an allowed vault UI (some same-origin /api proxies omit Origin). */
+export function isTrustedBrowserRequest(
+  origin: string | undefined,
+  referer: string | undefined,
+  env: Env,
+): boolean {
+  if (isTrustedBrowserOrigin(origin, env)) return true;
+  if (!referer) return false;
+  try {
+    return isAllowedWebOrigin(new URL(referer).origin, env);
+  } catch {
+    return false;
+  }
+}
+
 /** Allow platform + tenant subdomains under VAULT_BASE_DOMAIN, plus configured WEB_ORIGIN. */
 export function isAllowedWebOrigin(origin: string, env: Env): boolean {
   if (origin === env.WEB_ORIGIN) return true;

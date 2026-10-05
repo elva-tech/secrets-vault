@@ -28,7 +28,7 @@ export function apiRequestHeaders(extra?: HeadersInit, omitContentType = false):
   if (!omitContentType && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }
-  if (API_BASE && typeof window !== 'undefined') {
+  if (typeof window !== 'undefined') {
     headers['X-Vault-Host'] = window.location.hostname;
   }
   return headers;
