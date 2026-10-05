@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../middleware/rate-limit.middleware.js';
 import { z } from 'zod';
 import { NonOwnerBehavior, PolicyResourceType } from '@vault/shared';
 import { createTenantApiRouter } from '../middleware/tenant-api.middleware.js';
@@ -11,11 +11,9 @@ import { AccessControlError } from '../../modules/access-control/services/access
 import { ApiError } from '../errors/api-error.js';
 import { NotificationService } from '../../modules/notifications/notification.service.js';
 
-const otpVerifyLimiter = rateLimit({
+const otpVerifyLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
 function mapError(err: unknown, next: (e: unknown) => void) {

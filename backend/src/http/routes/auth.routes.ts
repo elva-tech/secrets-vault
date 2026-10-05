@@ -13,7 +13,7 @@ import {
   setSessionCookie,
 } from '../middleware/session.middleware.js';
 import { rejectClientTenantOverride } from '../middleware/tenant-resolution.middleware.js';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../middleware/rate-limit.middleware.js';
 import { AuthorizationService } from '../../modules/access-control/authorization.service.js';
 import { UserRepository } from '../../modules/users/repositories/user.repository.js';
 
@@ -22,11 +22,9 @@ const loginSchema = z.object({
   password: z.string().min(8),
 });
 
-const authLimiter = rateLimit({
+const authLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
   message: { error: { code: 'RATE_LIMITED', message: 'Too many login attempts' } },
 });
 

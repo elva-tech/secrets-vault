@@ -1,7 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from './http/middleware/rate-limit.middleware.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadEnv } from './config/env.js';
@@ -64,11 +64,9 @@ export function createApp(): express.Application {
   app.use(optionalSession);
 
   app.use(
-    rateLimit({
+    createRateLimiter({
       windowMs: 60 * 1000,
       max: 300,
-      standardHeaders: true,
-      legacyHeaders: false,
     }),
   );
 

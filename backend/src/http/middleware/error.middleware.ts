@@ -64,7 +64,11 @@ export function errorMiddleware(
     return;
   }
 
-  logger.error('Unhandled error', { requestId: req.requestId });
+  const errMeta =
+    err instanceof Error
+      ? { message: err.message, name: err.name, stack: err.stack }
+      : { value: String(err) };
+  logger.error('Unhandled error', { requestId: req.requestId, ...errMeta });
   res.status(500).json({
     error: {
       code: 'INTERNAL_ERROR',
