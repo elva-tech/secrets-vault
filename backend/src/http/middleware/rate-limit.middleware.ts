@@ -5,13 +5,17 @@ import rateLimit, { type RateLimitRequestHandler, type Options } from 'express-r
  * express-rate-limit v7 validation can throw and become 500s on login routes otherwise.
  */
 export function createRateLimiter(options: Partial<Options>): RateLimitRequestHandler {
+  const { validate: userValidate, ...rest } = options;
+  const validateOverrides =
+    userValidate !== undefined && typeof userValidate === 'object' ? userValidate : {};
+
   return rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
-    ...options,
+    ...rest,
     validate: {
       xForwardedForHeader: false,
-      ...(options.validate ?? {}),
+      ...validateOverrides,
     },
   });
 }
