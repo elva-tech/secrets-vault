@@ -14,6 +14,8 @@ const envSchema = z.object({
   SESSION_SECRET: z.string().min(32),
   REDIS_URL: z.string().optional(),
   SESSION_TTL_SECONDS: z.coerce.number().default(28800),
+  /** Use `none` when the UI and API are on different origins (e.g. Vercel + Render). */
+  SESSION_COOKIE_SAMESITE: z.enum(['lax', 'none', 'strict']).default('lax'),
   SEED_SUPER_ADMIN_EMAIL: z.string().email().optional(),
   SEED_SUPER_ADMIN_PASSWORD: z.string().min(12).optional(),
   VAULT_ENCRYPTION_MASTER_KEY: z.string().min(32).optional(),

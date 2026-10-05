@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { loadEnv } from '../../config/env.js';
+import { isTrustedBrowserOrigin } from '../utils/cors-origin.js';
 import { HostnameTenantResolverService } from '../../modules/tenant/services/hostname-tenant-resolver.service.js';
 
 let resolver: HostnameTenantResolverService | null = null;
@@ -17,10 +18,15 @@ export function getRequestHostname(req: Request): string {
     return forwarded.split(',')[0].trim();
   }
   const env = loadEnv();
-  // Dev/test only: Vite proxy forwards the browser hostname (not a client-controlled override in production).
-  if (env.NODE_ENV !== 'production') {
-    const vaultHost = req.headers['x-vault-host'];
-    if (typeof vaultHost === 'string' && vaultHost.trim()) {
+  const vaultHost = req.headers['x-vault-host'];
+  if (typeof vaultHost === 'string' && vaultHost.trim()) {
+    const trusted =
+      env.NODE_ENV !== 'production' ||
+      isTrustedBrowserOrigin(
+        typeof req.headers.origin === 'string' ? req.headers.origin : undefined,
+        env,
+      );
+    if (trusted) {
       return vaultHost.trim();
     }
   }

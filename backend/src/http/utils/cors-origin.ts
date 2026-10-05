@@ -1,5 +1,11 @@
 import type { Env } from '../../config/env.js';
 
+/** True when browser Origin is allowed to supply X-Vault-Host (Vercel UI → Render API). */
+export function isTrustedBrowserOrigin(origin: string | undefined, env: Env): boolean {
+  if (!origin) return false;
+  return isAllowedWebOrigin(origin, env);
+}
+
 /** Allow platform + tenant subdomains under VAULT_BASE_DOMAIN, plus configured WEB_ORIGIN. */
 export function isAllowedWebOrigin(origin: string, env: Env): boolean {
   if (origin === env.WEB_ORIGIN) return true;

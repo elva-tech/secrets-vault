@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { apiFetch, apiUrl } from '../api/client';
+import { apiFetch, apiRequestHeaders, apiUrl } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Modal } from '../components/Modal';
@@ -310,6 +310,7 @@ export function ApplicationVaultPage() {
     const res = await fetch(apiUrl(`/api/vault/applications/${applicationId}/environments/${envId}/files`), {
       method: 'POST',
       credentials: 'include',
+      headers: apiRequestHeaders(undefined, true),
       body: data,
     });
     if (!res.ok) {

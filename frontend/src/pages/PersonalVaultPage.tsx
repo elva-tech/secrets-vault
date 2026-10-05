@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { apiFetch, apiUrl } from '../api/client';
+import { apiFetch, apiRequestHeaders, apiUrl } from '../api/client';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Modal } from '../components/Modal';
 import { useToast } from '../notifications/ToastContext';
@@ -144,6 +144,7 @@ export function PersonalVaultPage() {
     const res = await fetch(apiUrl('/api/personal-vault/files'), {
       method: 'POST',
       credentials: 'include',
+      headers: apiRequestHeaders(undefined, true),
       body: data,
     });
     if (!res.ok) {
