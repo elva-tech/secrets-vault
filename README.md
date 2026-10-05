@@ -31,7 +31,7 @@ Open **tenant/platform hostnames**, not bare `localhost` — e.g. `http://elva.v
 
 **Render (backend):** Connect repo, set **Root Directory** to `backend`, build `npm install && npm run build`, start `npm start`. See `backend/render.yaml` and `backend/.env.example`.
 
-**Vercel (frontend):** Root Directory `frontend`. Set `VITE_API_BASE_URL` to your Render API URL. Set backend `WEB_ORIGIN` to your Vercel URL.
+**Vercel (frontend):** Either leave **Root Directory** empty (uses repo-root `vercel.json` → builds `frontend/`) or set Root Directory to `frontend` (uses `frontend/vercel.json`). In Project Settings → General, set **Framework Preset** to **Vite** (not “Services”). Set `VITE_API_BASE_URL` to your Render API URL and backend `WEB_ORIGIN` to your Vercel URL.
 
 **DNS:** `VAULT_BASE_DOMAIN` + `*.{VAULT_BASE_DOMAIN}` → frontend (and API if same host) per your architecture; tenant context is resolved from hostname.
 
