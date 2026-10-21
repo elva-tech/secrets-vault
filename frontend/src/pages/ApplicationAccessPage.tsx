@@ -1,9 +1,19 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { apiFetch } from '../api/client';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast } from '../notifications/ToastContext';
 import { apiErrorMessage } from '../lib/validation';
+import { PageHeader } from '../components/ui/PageHeader';
+import { LoadingState } from '../components/ui/LoadingState';
+
+function requestStatusClass(status: string): string {
+  const s = status.toLowerCase();
+  if (s === 'pending') return 'workspace-status-pill workspace-status-pill--pending';
+  if (s === 'approved') return 'workspace-status-pill workspace-status-pill--approved';
+  if (s === 'rejected') return 'workspace-status-pill workspace-status-pill--rejected';
+  return 'workspace-status-pill';
+}
 
 type AccessRequest = {
   id: string;
@@ -15,6 +25,13 @@ type AccessRequest = {
   environmentId: string;
   resourceIds: string[];
   resourceType: string;
+  permissions: string[];
+  grantId?: string | null;
+  approvedAt?: string | null;
+  rejectedAt?: string | null;
+  approvedBy?: string | null;
+  rejectedBy?: string | null;
+  rejectionReason?: string | null;
   createdAt?: string;
 };
 
@@ -34,12 +51,12 @@ export function ApplicationAccessPage() {
   const [mine, setMine] = useState<AccessRequest[]>([]);
   const [inbox, setInbox] = useState<AccessRequest[]>([]);
   const [grants, setGrants] = useState<Grant[]>([]);
-  const [otpRequestId, setOtpRequestId] = useState('');
-  const [otpCode, setOtpCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [rejectId, setRejectId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [decidingId, setDecidingId] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -77,45 +94,45 @@ export function ApplicationAccessPage() {
   }, [applicationId]);
 
   async function approve(id: string) {
+    if (decidingId) return;
+    setDecidingId(id);
     setActionLoading(true);
     try {
-      await apiFetch(`/api/access-requests/${id}/approve`, { method: 'POST' });
-      push('success', 'Request approved. The requester can verify OTP to receive temporary access.');
+      const res = await apiFetch<{ request: AccessRequest; grant: { expiresAt: string } }>(
+        `/api/access-requests/${id}/approve`,
+        { method: 'POST' },
+      );
+      push(
+        'success',
+        `Request approved. Access is active until ${new Date(res.grant.expiresAt).toLocaleString()}.`,
+      );
       await load();
     } catch (err) {
       push('error', apiErrorMessage(err, 'Approval failed'));
     } finally {
       setActionLoading(false);
+      setDecidingId(null);
     }
   }
 
   async function reject(id: string) {
+    if (decidingId) return;
+    setDecidingId(id);
     setActionLoading(true);
     try {
-      await apiFetch(`/api/access-requests/${id}/reject`, { method: 'POST' });
+      await apiFetch(`/api/access-requests/${id}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: rejectReason.trim() || undefined }),
+      });
       push('success', 'Request rejected');
       setRejectId(null);
+      setRejectReason('');
       await load();
     } catch (err) {
       push('error', apiErrorMessage(err, 'Reject failed'));
     } finally {
       setActionLoading(false);
-    }
-  }
-
-  async function verifyOtp(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    try {
-      const res = await apiFetch<{ grant: { expiresAt: string } }>(
-        `/api/access-requests/${otpRequestId}/verify-otp`,
-        { method: 'POST', body: JSON.stringify({ code: otpCode }) },
-      );
-      push('success', `Access granted until ${new Date(res.grant.expiresAt).toLocaleString()}`);
-      setOtpCode('');
-      await load();
-    } catch (err) {
-      setError(apiErrorMessage(err, 'OTP verification failed'));
+      setDecidingId(null);
     }
   }
 
@@ -132,43 +149,50 @@ export function ApplicationAccessPage() {
     }
   }
 
-  const otpPending = mine.filter((r) => r.status === 'OTP_GENERATED' || r.status === 'APPROVED');
-
   return (
-    <div>
+    <div className="workspace-page workspace-surface">
       {applicationId ? (
-        <p><Link to={`/applications/${applicationId}`}>← Application</Link></p>
+        <p className="workspace-breadcrumb"><Link to={`/applications/${applicationId}`}>← Application</Link></p>
       ) : (
-        <p><Link to="/applications">← Applications</Link></p>
+        <p className="workspace-breadcrumb"><Link to="/applications">← Applications</Link></p>
       )}
-      <div className="card">
-        <h1>Access Requests</h1>
-        {error && <div className="error-banner">{error}</div>}
-        {loading ? (
-          <p className="muted">Loading…</p>
-        ) : (
+      <PageHeader
+        title="Access requests"
+        description="Request access to protected resources and review pending requests in the portal. Approval grants temporary access—no email codes required."
+      />
+      {error && <div className="error-banner">{error}</div>}
+      {loading ? (
+        <LoadingState label="Loading access data…" />
+      ) : (
+        <div>
           <>
             <h2>My requests</h2>
             {mine.length === 0 ? (
               <p className="muted">You have no access requests.</p>
             ) : (
-              <ul className="request-list">
+              <ul className="workspace-request-list">
                 {mine.map((r) => (
-                  <li key={r.id} className="card nested-card">
-                    <strong>{r.status}</strong>
+                  <li key={r.id} className="workspace-request-card">
+                    <span className={requestStatusClass(r.status)}>{r.status}</span>
                     <p>{r.reason}</p>
                     <p className="muted">
-                      {r.resourceType} — {r.resourceIds.length} resource(s)
+                      {r.resourceType} — {r.resourceIds.length} resource(s) —{' '}
+                      {r.permissions.join(', ')}
                       {r.createdAt && ` — ${new Date(r.createdAt).toLocaleString()}`}
                     </p>
-                    {(r.status === 'OTP_GENERATED' || r.status === 'APPROVED') && (
-                      <button
-                        type="button"
-                        className="secondary"
-                        onClick={() => setOtpRequestId(r.id)}
-                      >
-                        Verify OTP for this request
-                      </button>
+                    {r.status === 'PENDING' && (
+                      <p className="muted">Waiting for an approver to review this request.</p>
+                    )}
+                    {r.status === 'APPROVED' && r.approvedAt && (
+                      <p className="muted">
+                        Approved {new Date(r.approvedAt).toLocaleString()}
+                        {r.grantId ? ' — check temporary access below.' : ''}
+                      </p>
+                    )}
+                    {r.status === 'REJECTED' && (
+                      <p className="muted">
+                        Declined{r.rejectionReason ? `: ${r.rejectionReason}` : ''}
+                      </p>
                     )}
                   </li>
                 ))}
@@ -179,14 +203,21 @@ export function ApplicationAccessPage() {
             {inbox.length === 0 ? (
               <p className="muted">No pending requests.</p>
             ) : (
-              <ul className="request-list">
+              <ul className="workspace-request-list">
                 {inbox.map((r) => (
-                  <li key={r.id} className="card nested-card">
+                  <li key={r.id} className="workspace-request-card">
                     <p>{r.reason}</p>
-                    <p className="muted">Status: {r.status}</p>
+                    <span className={requestStatusClass(r.status)}>{r.status}</span>
+                    <p className="muted">
+                      {r.resourceType} — {r.permissions.join(', ')}
+                    </p>
                     {r.status === 'PENDING' && (
                       <div className="action-row">
-                        <button type="button" onClick={() => void approve(r.id)} disabled={actionLoading}>
+                        <button
+                          type="button"
+                          onClick={() => void approve(r.id)}
+                          disabled={actionLoading || decidingId === r.id}
+                        >
                           Approve
                         </button>
                         <button
@@ -203,41 +234,6 @@ export function ApplicationAccessPage() {
                 ))}
               </ul>
             )}
-
-            <h2>Verify OTP</h2>
-            {otpPending.length > 0 && !otpRequestId && (
-              <p className="muted">Select a request above or enter the request ID below.</p>
-            )}
-            <form className="form" onSubmit={(e) => void verifyOtp(e)}>
-              <label>
-                Request
-                <select
-                  value={otpRequestId}
-                  onChange={(e) => setOtpRequestId(e.target.value)}
-                  required
-                >
-                  <option value="">Select request…</option>
-                  {otpPending.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.reason.slice(0, 40)} — {r.status}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                OTP (6 digits)
-                <input
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  pattern="\d{6}"
-                  maxLength={6}
-                  inputMode="numeric"
-                  required
-                  autoComplete="one-time-code"
-                />
-              </label>
-              <button type="submit">Verify OTP</button>
-            </form>
 
             <h2>Temporary access</h2>
             {grants.length === 0 ? (
@@ -261,8 +257,8 @@ export function ApplicationAccessPage() {
               </ul>
             )}
           </>
-        )}
-      </div>
+        </div>
+      )}
 
       <ConfirmDialog
         open={!!rejectId}
@@ -271,9 +267,22 @@ export function ApplicationAccessPage() {
         confirmLabel="Reject"
         destructive
         loading={actionLoading}
-        onCancel={() => setRejectId(null)}
+        onCancel={() => {
+          setRejectId(null);
+          setRejectReason('');
+        }}
         onConfirm={() => rejectId && void reject(rejectId)}
-      />
+      >
+        <label className="confirm-reason">
+          Optional reason
+          <textarea
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            rows={3}
+            maxLength={2000}
+          />
+        </label>
+      </ConfirmDialog>
     </div>
   );
 }

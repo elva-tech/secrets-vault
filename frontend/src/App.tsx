@@ -11,41 +11,80 @@ import { ApplicationAccessPage } from './pages/ApplicationAccessPage';
 import { PersonalVaultPage } from './pages/PersonalVaultPage';
 import { AuditPage } from './pages/AuditPage';
 import { ForbiddenPage } from './pages/ForbiddenPage';
-import { AppShell } from './layout/AppShell';
+import { PlatformShell } from './layout/PlatformShell';
+import { TenantShell } from './layout/TenantShell';
+import { PlatformRoot } from './routing/PlatformRoot';
+import { CollaboratePage } from './pages/marketing/CollaboratePage';
+import { UnavailableWorkspacePage } from './pages/UnavailableWorkspacePage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { LoadingState } from './components/ui/LoadingState';
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { me, loading } = useAuth();
-  if (loading) return <p className="muted">Loading session…</p>;
+  if (loading) return <LoadingState label="Loading session…" />;
   if (!me) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+function PlatformProtected({ children }: { children: React.ReactNode }) {
+  const { me, loading } = useAuth();
+  if (loading) return <LoadingState label="Loading session…" />;
+  if (!me?.user.isPlatformSuperAdmin || me.session.scope !== 'platform') {
+    return <Navigate to="/forbidden" replace />;
+  }
+  return <>{children}</>;
+}
+
+/** Tenant APIs require a tenant hostname session — not platform super-admin on the platform host. */
+function TenantArea({ children }: { children: React.ReactNode }) {
+  const { me } = useAuth();
+  if (me?.session.scope === 'platform') {
+    return <Navigate to="/platform" replace />;
+  }
   return <>{children}</>;
 }
 
 export function App() {
   return (
     <Routes>
+      <Route path="/" element={<PlatformRoot />} />
+      <Route path="/collaborate" element={<CollaboratePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forbidden" element={<ForbiddenPage />} />
+      <Route path="/unavailable" element={<UnavailableWorkspacePage />} />
+
       <Route
-        path="/"
+        path="/platform"
         element={
           <Protected>
-            <AppShell />
+            <PlatformProtected>
+              <PlatformShell />
+            </PlatformProtected>
           </Protected>
         }
       >
-        <Route index element={<Navigate to="/tenant" replace />} />
-        <Route path="platform" element={<PlatformPage />} />
-        <Route path="platform/tenants/:id" element={<PlatformTenantDetailPage />} />
-        <Route path="tenant" element={<TenantPage />} />
-        <Route path="applications" element={<ApplicationsPage />} />
-        <Route path="access-requests" element={<ApplicationAccessPage />} />
-        <Route path="personal-vault" element={<PersonalVaultPage />} />
-        <Route path="audit" element={<AuditPage />} />
-        <Route path="applications/:applicationId" element={<ApplicationDetailPage />} />
-        <Route path="applications/:applicationId/vault" element={<ApplicationVaultPage />} />
-        <Route path="applications/:applicationId/access" element={<ApplicationAccessPage />} />
+        <Route index element={<PlatformPage />} />
+        <Route path="tenants/:id" element={<PlatformTenantDetailPage />} />
       </Route>
-      <Route path="*" element={<p>Not found</p>} />
+
+      <Route
+        element={
+          <Protected>
+            <TenantShell />
+          </Protected>
+        }
+      >
+        <Route path="tenant" element={<TenantArea><TenantPage /></TenantArea>} />
+        <Route path="applications" element={<TenantArea><ApplicationsPage /></TenantArea>} />
+        <Route path="access-requests" element={<TenantArea><ApplicationAccessPage /></TenantArea>} />
+        <Route path="personal-vault" element={<TenantArea><PersonalVaultPage /></TenantArea>} />
+        <Route path="audit" element={<TenantArea><AuditPage /></TenantArea>} />
+        <Route path="applications/:applicationId" element={<TenantArea><ApplicationDetailPage /></TenantArea>} />
+        <Route path="applications/:applicationId/vault" element={<TenantArea><ApplicationVaultPage /></TenantArea>} />
+        <Route path="applications/:applicationId/access" element={<TenantArea><ApplicationAccessPage /></TenantArea>} />
+      </Route>
+
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

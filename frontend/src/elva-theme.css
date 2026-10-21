@@ -1,0 +1,1007 @@
+/* ELVA Secrets Vault — design tokens & marketing/workspace chrome */
+
+:root {
+  --elva-navy-950: #060d18;
+  --elva-navy-900: #0a1628;
+  --elva-navy-800: #0f2137;
+  --elva-navy-700: #152a45;
+  --elva-blue-glow: #1e3a5f;
+  --elva-surface: #111c2e;
+  --elva-surface-elevated: #162236;
+  --elva-border: rgba(148, 163, 184, 0.22);
+  --elva-text: #f1f5f9;
+  --elva-text-muted: #94a3b8;
+  --elva-text-dim: #64748b;
+  --elva-accent: #7dd3fc;
+  --elva-workspace-bg: #eef2f7;
+  --elva-workspace-card: #ffffff;
+  --elva-workspace-text: #0f172a;
+  --elva-on-surface: #0f172a;
+  --elva-on-surface-muted: #475569;
+  --elva-on-surface-label: #334155;
+  --elva-on-surface-placeholder: #64748b;
+  /* Matches elvasupport.in (Fraunces + Source Sans 3) */
+  --elva-font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --elva-font-sans: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  --elva-radius: 8px;
+  --elva-radius-lg: 12px;
+  --elva-focus: #38bdf8;
+  --elva-max: 1120px;
+}
+
+body {
+  font-family: var(--elva-font-sans);
+}
+
+h1,
+.mkt-headline,
+.mkt-section-title {
+  font-family: var(--elva-font-serif);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.mkt-nav a {
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.mkt-lead,
+.mkt-section-lead {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: var(--elva-radius);
+  padding: 0.6rem 1.1rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btn-primary {
+  background: #fff;
+  color: var(--elva-navy-900);
+}
+
+.btn-primary:hover {
+  background: #e2e8f0;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mkt-page .btn-secondary {
+  background: transparent;
+  color: var(--elva-text);
+  border-color: var(--elva-border);
+}
+
+.btn-secondary:hover {
+  border-color: rgba(248, 250, 252, 0.45);
+}
+
+.btn-sm {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.875rem;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+button.btn {
+  font-family: inherit;
+}
+
+button.danger {
+  background: #b91c1c;
+  color: #fff;
+}
+
+/* Logo */
+.elva-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.elva-logo-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.elva-logo--light .elva-logo-title,
+.elva-logo--light .elva-logo-by {
+  color: #fff;
+}
+
+.elva-logo--dark .elva-logo-title {
+  color: var(--elva-workspace-text);
+}
+
+.elva-logo--dark .elva-logo-by {
+  color: var(--elva-text-dim);
+}
+
+.elva-logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.elva-logo-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.elva-logo-by {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+}
+
+.elva-logo-sub {
+  font-size: 0.75rem;
+  color: var(--elva-text-muted);
+  margin-top: 0.15rem;
+}
+
+/* Marketing */
+.mkt-page {
+  background: var(--elva-navy-950);
+  color: var(--elva-text);
+  min-height: 100vh;
+}
+
+.mkt-container {
+  max-width: var(--elva-max);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.mkt-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(6, 13, 24, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--elva-border);
+}
+
+.mkt-header-inner {
+  max-width: var(--elva-max);
+  margin: 0 auto;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.mkt-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.mkt-nav a {
+  color: var(--elva-text-muted);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.mkt-nav a:hover {
+  color: #fff;
+}
+
+.mkt-nav a.btn,
+.mkt-nav .btn-primary {
+  color: var(--elva-navy-900);
+}
+
+.mkt-nav a.btn-primary:hover,
+.mkt-nav a.btn-primary:focus-visible {
+  color: var(--elva-navy-950);
+}
+
+.mkt-nav a.btn-primary:active {
+  color: var(--elva-navy-900);
+}
+
+.mkt-nav a.btn-primary:disabled {
+  color: var(--elva-navy-900);
+}
+
+.mkt-page .mkt-hero-cta .btn-primary,
+.mkt-page .mkt-cta .btn-primary {
+  color: var(--elva-navy-900);
+}
+
+.mkt-nav-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--elva-border);
+  color: #fff;
+  padding: 0.4rem 0.65rem;
+  border-radius: 6px;
+}
+
+.mkt-hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(30, 58, 95, 0.55), transparent),
+    linear-gradient(180deg, var(--elva-navy-800), var(--elva-navy-950));
+  position: relative;
+  overflow: hidden;
+}
+
+.mkt-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at center, rgba(125, 211, 252, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.mkt-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  padding: 4rem 1.25rem 5rem;
+  position: relative;
+}
+
+.mkt-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  color: var(--elva-accent);
+  margin: 0 0 1rem;
+}
+
+.mkt-headline {
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+  line-height: 1.1;
+  margin: 0 0 1rem;
+}
+
+.mkt-lead {
+  color: var(--elva-text-muted);
+  font-size: 1.05rem;
+  max-width: 36rem;
+  margin: 0 0 1.5rem;
+}
+
+.mkt-hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.mkt-preview {
+  background: rgba(15, 33, 55, 0.85);
+  border: 1px solid var(--elva-border);
+  border-radius: var(--elva-radius-lg);
+  padding: 1.25rem 1.5rem;
+  align-self: center;
+}
+
+.mkt-preview-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--elva-accent);
+  margin: 0 0 0.5rem;
+}
+
+.mkt-preview-host {
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
+}
+
+.mkt-preview-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.65rem;
+  font-size: 0.9rem;
+  color: var(--elva-text-muted);
+}
+
+.mkt-mask {
+  font-family: ui-monospace, monospace;
+  color: var(--elva-text);
+}
+
+.mkt-badge {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--elva-border);
+  border-radius: 4px;
+  margin-left: 0.35rem;
+}
+
+.mkt-section {
+  padding: 4rem 0;
+}
+
+.mkt-section--divider {
+  border-top: 1px solid var(--elva-border);
+}
+
+.mkt-section-title {
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+  margin: 0 0 0.5rem;
+}
+
+.mkt-section-title--sm {
+  font-size: 1.35rem;
+  color: var(--elva-on-surface);
+}
+
+.mkt-section-lead {
+  color: var(--elva-text-muted);
+  margin: 0 0 2rem;
+  max-width: 40rem;
+}
+
+.mkt-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.mkt-step-num {
+  font-size: 0.75rem;
+  color: var(--elva-accent);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.mkt-step h3 {
+  font-size: 1.05rem;
+  margin: 0 0 0.35rem;
+  font-family: var(--elva-font-sans);
+  font-weight: 600;
+}
+
+.mkt-step p {
+  color: var(--elva-text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.mkt-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--elva-border);
+}
+
+.mkt-feature {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--elva-border);
+  border-right: 1px solid var(--elva-border);
+}
+
+.mkt-feature:nth-child(3n) {
+  border-right: none;
+}
+
+.mkt-feature h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.35rem;
+  font-family: var(--elva-font-sans);
+  font-weight: 600;
+}
+
+.mkt-feature p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--elva-text-muted);
+}
+
+.mkt-host-example {
+  font-size: 1.1rem;
+  color: var(--elva-accent);
+  margin: 1rem 0;
+}
+
+.mkt-checklist {
+  color: var(--elva-text-muted);
+  line-height: 1.8;
+}
+
+.mkt-security-list {
+  color: var(--elva-text-muted);
+  line-height: 1.75;
+  padding-left: 1.1rem;
+  margin: 0;
+  max-width: 42rem;
+}
+
+.mkt-cta {
+  border-top: 1px solid var(--elva-border);
+  padding: 4rem 0 5rem;
+  text-align: center;
+}
+
+.mkt-cta-inner {
+  max-width: 640px;
+}
+
+.mkt-footer {
+  border-top: 1px solid var(--elva-border);
+  padding: 2rem 0;
+}
+
+.mkt-footer-inner {
+  max-width: var(--elva-max);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.mkt-footer-muted {
+  color: var(--elva-text-dim);
+  font-size: 0.85rem;
+}
+
+.mkt-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mkt-footer-links a {
+  color: var(--elva-text-muted);
+  font-size: 0.9rem;
+}
+
+.mkt-collab-main {
+  padding: 3rem 1.25rem 4rem;
+}
+
+.mkt-collab-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.mkt-contact-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+}
+
+.mkt-contact-list a {
+  color: var(--elva-accent);
+}
+
+.mkt-collab-steps {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.mkt-collab-steps li {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.mkt-collab-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--elva-workspace-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Auth — shared platform & tenant sign-in */
+.auth-layout {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--elva-navy-950);
+  color: var(--elva-text);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.auth-layout-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 1rem;
+  gap: 1.5rem;
+}
+
+.auth-layout-brand {
+  width: 100%;
+  margin: 0;
+}
+
+.auth-layout-tagline {
+  color: var(--elva-text-muted);
+  margin: 0.75rem 0 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.auth-panel {
+  width: 100%;
+  margin: 0;
+  align-self: stretch;
+}
+
+.card--auth,
+.card--workspace {
+  background: #fff;
+  color: var(--elva-on-surface);
+  border: 1px solid #e2e8f0;
+}
+
+.card--auth {
+  padding: 2rem 2rem 1.75rem;
+  border-radius: var(--elva-radius-lg);
+  box-shadow: 0 12px 40px rgba(6, 13, 24, 0.35);
+}
+
+.card--auth h1 {
+  font-family: var(--elva-font-serif);
+  font-size: 1.65rem;
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+  color: var(--elva-on-surface);
+}
+
+.card--auth .muted,
+.card--workspace .muted,
+.surface-light .muted {
+  color: var(--elva-on-surface-muted);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.card--auth .error-banner,
+.card--auth .banner--warn {
+  margin-top: 1rem;
+}
+
+.form-auth {
+  width: 100%;
+  max-width: none;
+  margin-top: 1.25rem;
+  gap: 1rem;
+}
+
+.card--auth .form-auth label {
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--elva-on-surface-label);
+}
+
+.card--auth .form-auth input,
+.card--auth .form-auth select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.4;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+
+.card--auth .btn-primary {
+  background: var(--elva-navy-900);
+  color: #fff;
+  min-height: 2.75rem;
+  font-size: 1rem;
+  margin-top: 0.25rem;
+}
+
+.card--auth .btn-primary:hover:not(:disabled) {
+  background: var(--elva-navy-800);
+  color: #fff;
+}
+
+.card--auth .btn-primary:disabled {
+  color: #fff;
+  opacity: 0.65;
+}
+
+.auth-back {
+  margin: 1.25rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.auth-back a {
+  color: var(--elva-on-surface-muted);
+}
+
+.auth-back a:hover {
+  color: var(--elva-on-surface);
+}
+
+.auth-footer {
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--elva-text-dim);
+  font-size: 0.8rem;
+  padding: 1rem 1.25rem 1.25rem;
+  margin: 0;
+}
+
+.banner--warn {
+  background: #fffbeb;
+  color: #78350f;
+  border: 1px solid #fde68a;
+  padding: 0.65rem 0.75rem;
+  border-radius: 6px;
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+}
+
+/* Workspace shell */
+.workspace {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+  background: var(--elva-workspace-bg);
+}
+
+.workspace-sidebar {
+  background: var(--elva-navy-900);
+  color: var(--elva-text);
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-right: 1px solid var(--elva-border);
+}
+
+.workspace-sidebar-meta {
+  font-size: 0.8rem;
+  color: var(--elva-text-muted);
+  margin: 0.25rem 0 0.75rem;
+}
+
+.workspace-sidebar-slug {
+  display: block;
+  font-size: 0.75rem;
+}
+
+.workspace-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+}
+
+.workspace-nav-group {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--elva-text-dim);
+  margin: 0.75rem 0 0.25rem;
+}
+
+.workspace-nav-link {
+  color: var(--elva-text-muted);
+  text-decoration: none;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.workspace-nav-link:hover,
+.workspace-nav-link.active {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.workspace-sidebar-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--elva-border);
+}
+
+.workspace-content {
+  padding: 1.5rem 1.75rem;
+  max-width: 1100px;
+  width: 100%;
+}
+
+.workspace .card {
+  background: var(--elva-workspace-card);
+  border-color: #e2e8f0;
+}
+
+.page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.page-heading-title {
+  font-family: var(--elva-font-serif);
+  font-size: 1.85rem;
+  margin: 0;
+  font-weight: 600;
+  color: var(--elva-on-surface);
+}
+
+.page-heading-desc {
+  color: var(--elva-on-surface-muted);
+  margin: 0.35rem 0 0;
+  max-width: 42rem;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 40vh;
+  color: var(--elva-text-dim);
+}
+
+.loading-state-spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #cbd5e1;
+  border-top-color: var(--elva-navy-800);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.empty-state-title {
+  font-size: 1.15rem;
+  margin: 0 0 0.35rem;
+}
+
+.empty-state-title {
+  color: var(--elva-on-surface);
+}
+
+.empty-state-desc {
+  color: var(--elva-on-surface-muted);
+  margin: 0 0 1rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Workspace buttons align with theme (exclude .secondary — tab/cancel use light surfaces) */
+.workspace button:not(.btn):not(.icon-button):not(.inline-link-button):not(.danger-text):not(.vault-env-card):not(.vault-row-chevron):not(.secondary) {
+  background: var(--elva-navy-800);
+  color: #fff;
+}
+
+.workspace button:not(.btn):not(.icon-button):not(.inline-link-button):not(.danger-text):not(.vault-env-card):not(.vault-row-chevron):not(.secondary):hover:not(:disabled) {
+  background: var(--elva-navy-900);
+  color: #fff;
+}
+
+.workspace .btn-primary {
+  background: var(--elva-navy-900);
+  color: #fff;
+}
+
+.workspace .btn-primary:hover {
+  background: var(--elva-navy-800);
+}
+
+.workspace .btn-secondary {
+  background: #fff;
+  color: var(--elva-workspace-text);
+  border-color: #cbd5e1;
+}
+
+@media (max-width: 900px) {
+  .mkt-hero-grid,
+  .mkt-collab-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mkt-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mkt-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mkt-feature {
+    border-right: none;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-sidebar {
+    position: relative;
+  }
+}
+
+@media (max-width: 640px) {
+  .mkt-nav-toggle {
+    display: block;
+  }
+
+  .mkt-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    flex-direction: column;
+    background: var(--elva-navy-900);
+    padding: 1rem;
+    border-bottom: 1px solid var(--elva-border);
+  }
+
+  .mkt-nav--open {
+    display: flex;
+  }
+
+  .mkt-header-inner {
+    position: relative;
+    flex-wrap: wrap;
+  }
+
+  .mkt-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-state-spinner {
+    animation: none;
+  }
+}
+
+/* ——— Light surfaces: prevent inherited dark-theme text on white UI ——— */
+.surface-light,
+.workspace .card,
+.workspace .modal-panel,
+.modal-panel,
+.card:not(.card--auth):not(.card--workspace),
+.mkt-page .card--workspace {
+  color: var(--elva-on-surface);
+}
+
+.workspace .card h1,
+.workspace .card h2,
+.workspace .card h3,
+.modal-panel h2,
+.modal-header h2,
+.detail-grid dt {
+  color: var(--elva-on-surface-label);
+}
+
+.workspace .card label,
+.modal-panel label,
+.form label {
+  color: var(--elva-on-surface-label);
+  font-weight: 500;
+}
+
+.workspace .card input,
+.workspace .card select,
+.workspace .card textarea,
+.modal-panel input,
+.modal-panel select,
+.modal-panel textarea,
+.card input,
+.card select,
+.card textarea,
+.filter-row input {
+  color: var(--elva-on-surface);
+  background-color: #fff;
+}
+
+.workspace .card input::placeholder,
+.modal-panel input::placeholder {
+  color: var(--elva-on-surface-placeholder);
+}
+
+.workspace .card a:not(.btn):not(.workspace-nav-link):not(.app-card),
+.modal-panel a:not(.btn) {
+  color: #1d4ed8;
+}
+
+.workspace table th {
+  color: var(--elva-on-surface-label);
+}
+
+.workspace table td {
+  color: var(--elva-on-surface);
+}
+
+.workspace .field-error {
+  color: #b91c1c;
+}
+
+.mkt-page--collab .mkt-headline,
+.mkt-page--collab .mkt-lead {
+  color: var(--elva-text);
+}
+
+.mkt-collab-steps strong {
+  color: var(--elva-on-surface);
+}
+
+.mkt-collab-steps p {
+  color: var(--elva-on-surface-muted);
+}
+
+.workspace .btn-secondary {
+  background: #fff;
+  color: var(--elva-on-surface);
+  border: 1px solid #cbd5e1;
+}
+
+.workspace .icon-button {
+  color: var(--elva-on-surface-muted);
+}

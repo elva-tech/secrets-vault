@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { createRateLimiter } from '../middleware/rate-limit.middleware.js';
 import { z } from 'zod';
 import { NonOwnerBehavior, PolicyResourceType } from '@vault/shared';
 import { createTenantApiRouter } from '../middleware/tenant-api.middleware.js';
@@ -10,11 +9,6 @@ import { AccessPolicyService } from '../../modules/access-control/services/acces
 import { AccessControlError } from '../../modules/access-control/services/access-control.error.js';
 import { ApiError } from '../errors/api-error.js';
 import { NotificationService } from '../../modules/notifications/notification.service.js';
-
-const otpVerifyLimiter = createRateLimiter({
-  windowMs: 15 * 60 * 1000,
-  max: 30,
-});
 
 function mapError(err: unknown, next: (e: unknown) => void) {
   if (err instanceof AccessControlError) {
@@ -77,12 +71,12 @@ export function createAccessControlRouter(): Router {
     requirePermission('access.approve'),
     async (req, res, next) => {
       try {
-        const updated = await requests.approve(
+        const result = await requests.approve(
           req.trustedTenant!.tenantId,
           paramId(req.params.requestId),
           req.auth!.userId,
         );
-        res.json({ request: updated });
+        res.json(result);
       } catch (e) {
         mapError(e, next);
       }
@@ -94,32 +88,14 @@ export function createAccessControlRouter(): Router {
     requirePermission('access.reject'),
     async (req, res, next) => {
       try {
+        const body = z.object({ reason: z.string().max(2000).optional() }).parse(req.body ?? {});
         const updated = await requests.reject(
           req.trustedTenant!.tenantId,
           paramId(req.params.requestId),
           req.auth!.userId,
+          body.reason,
         );
         res.json({ request: updated });
-      } catch (e) {
-        mapError(e, next);
-      }
-    },
-  );
-
-  router.post(
-    '/access-requests/:requestId/verify-otp',
-    otpVerifyLimiter,
-    requirePermission('access.request'),
-    async (req, res, next) => {
-      try {
-        const body = z.object({ code: z.string().min(4).max(12) }).parse(req.body);
-        const result = await requests.verifyOtp(
-          req.trustedTenant!.tenantId,
-          paramId(req.params.requestId),
-          req.auth!.userId,
-          body.code,
-        );
-        res.json(result);
       } catch (e) {
         mapError(e, next);
       }

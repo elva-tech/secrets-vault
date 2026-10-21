@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { apiFetch, apiRequestHeaders, apiUrl } from '../api/client';
+import { apiFetch, apiUrl } from '../api/client';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Modal } from '../components/Modal';
 import { useToast } from '../notifications/ToastContext';
@@ -23,6 +23,7 @@ export function PersonalVaultPage() {
   const [deleteSecretId, setDeleteSecretId] = useState<string | null>(null);
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -135,25 +136,24 @@ export function PersonalVaultPage() {
 
   async function uploadFile(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (fileUploading) return;
     const form = e.currentTarget;
     const fileInput = form.elements.namedItem('file') as HTMLInputElement;
     if (!fileInput.files?.[0]) return;
     const data = new FormData();
     data.append('file', fileInput.files[0]);
     data.append('name', fileInput.files[0].name);
-    const res = await fetch(apiUrl('/api/personal-vault/files'), {
-      method: 'POST',
-      credentials: 'include',
-      headers: apiRequestHeaders(undefined, true),
-      body: data,
-    });
-    if (!res.ok) {
-      push('error', 'Upload failed');
-      return;
+    setFileUploading(true);
+    try {
+      await apiFetch('/api/personal-vault/files', { method: 'POST', body: data });
+      push('success', 'File uploaded');
+      form.reset();
+      await load();
+    } catch (err) {
+      push('error', apiErrorMessage(err, 'Upload failed'));
+    } finally {
+      setFileUploading(false);
     }
-    push('success', 'File uploaded');
-    form.reset();
-    await load();
   }
 
   return (
@@ -217,7 +217,9 @@ export function PersonalVaultPage() {
           )}
           <form onSubmit={(e) => void uploadFile(e)}>
             <input type="file" name="file" required />
-            <button type="submit">Upload file</button>
+            <button type="submit" disabled={fileUploading}>
+              {fileUploading ? 'Uploading…' : 'Upload file'}
+            </button>
           </form>
           <p className="muted small-note">Version history is not exposed by the personal vault API.</p>
         </>

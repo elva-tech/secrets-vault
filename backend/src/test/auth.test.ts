@@ -55,6 +55,7 @@ describe('Authentication', () => {
       .get('/api/auth/me')
       .set('X-Vault-Host', BASE)
       .set('Cookie', cookie);
-    expect(meAfter.status).toBe(401);
+    expect(meAfter.status).toBe(200);
+    expect(meAfter.body.authenticated).toBe(false);
   });
 });

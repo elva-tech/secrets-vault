@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { apiFetch } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Modal } from '../components/Modal';
@@ -13,6 +13,8 @@ import {
   validateEmail,
   validatePassword,
 } from '../lib/validation';
+import { PageHeader } from '../components/ui/PageHeader';
+import { LoadingState } from '../components/ui/LoadingState';
 
 type TenantContext = {
   tenant: {
@@ -46,7 +48,15 @@ type SettingsTab = 'tenant' | 'users' | 'roles';
 export function TenantPage() {
   const { me } = useAuth();
   const { push } = useToast();
+  const [searchParams] = useSearchParams();
   const [tab, setTab] = useState<SettingsTab>('tenant');
+
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t === 'users' || t === 'roles' || t === 'tenant') {
+      setTab(t);
+    }
+  }, [searchParams]);
   const [context, setContext] = useState<TenantContext | null>(null);
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -203,10 +213,38 @@ export function TenantPage() {
   }
 
   return (
-    <div className="card">
-      <h1>Settings</h1>
-      <p className="muted">Tenant administration — users and roles.</p>
+    <div className="workspace-page workspace-surface">
+      <PageHeader
+        title="Workspace overview"
+        description="Manage your tenant settings, users, roles, and shortcuts to vault resources."
+      />
       {error && <div className="error-banner">{error}</div>}
+
+      {tab === 'tenant' && context && !loading && (
+        <div className="workspace-summary-grid">
+          <div className="workspace-summary-card">
+            <strong>{users.length}</strong>
+            <span>Users</span>
+          </div>
+          <div className="workspace-summary-card">
+            <strong>{roles.length}</strong>
+            <span>Roles</span>
+          </div>
+          <div className="workspace-summary-card">
+            <strong>{context.tenant.status}</strong>
+            <span>Tenant status</span>
+          </div>
+        </div>
+      )}
+
+      {tab === 'tenant' && (
+        <div className="workspace-shortcuts">
+          <Link className="btn btn-primary" to="/applications">Applications</Link>
+          <Link className="btn btn-secondary" to="/access-requests">Access requests</Link>
+          <Link className="btn btn-secondary" to="/personal-vault">Personal vault</Link>
+          <Link className="btn btn-secondary" to="/audit">Audit logs</Link>
+        </div>
+      )}
 
       <nav className="tab-nav">
         {(['tenant', 'users', 'roles'] as const).map((t) => (
@@ -222,7 +260,7 @@ export function TenantPage() {
       </nav>
 
       {loading ? (
-        <p className="muted">Loading…</p>
+        <LoadingState label="Loading settings…" />
       ) : (
         <>
           {tab === 'tenant' && context && (

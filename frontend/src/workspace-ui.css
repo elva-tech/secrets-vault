@@ -1,0 +1,283 @@
+/* Shared authenticated workspace UI — scoped under .workspace */
+
+.workspace .workspace-page {
+  max-width: 100%;
+}
+
+.workspace .workspace-surface {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--elva-radius-lg);
+  padding: 1.35rem 1.5rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.workspace .workspace-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  color: var(--elva-on-surface-muted);
+  margin: 0 0 1rem;
+}
+
+.workspace .workspace-breadcrumb a {
+  color: var(--elva-on-surface-muted);
+  text-decoration: none;
+}
+
+.workspace .workspace-breadcrumb a:hover {
+  color: var(--elva-on-surface);
+  text-decoration: underline;
+}
+
+.workspace .workspace-section {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.workspace .workspace-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.workspace .workspace-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+.workspace .workspace-summary-card {
+  padding: 1rem 1.1rem;
+  border-radius: var(--elva-radius);
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.workspace .workspace-summary-card strong {
+  display: block;
+  font-size: 1.35rem;
+  color: var(--elva-on-surface);
+  margin-bottom: 0.2rem;
+}
+
+.workspace .workspace-summary-card span {
+  font-size: 0.85rem;
+  color: var(--elva-on-surface-muted);
+}
+
+.workspace .workspace-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+/* Application tiles — vault-inspired navy cards */
+.workspace .workspace-app-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.15rem;
+}
+
+@media (max-width: 1024px) {
+  .workspace .workspace-app-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .workspace .workspace-app-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.workspace .workspace-app-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 10rem;
+  text-align: left;
+  padding: 1.1rem 1.15rem 1rem;
+  border-radius: var(--elva-radius-lg);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: linear-gradient(165deg, var(--elva-navy-800) 0%, var(--elva-navy-900) 100%);
+  color: var(--elva-text);
+  text-decoration: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 1px 2px rgba(6, 13, 24, 0.12);
+}
+
+.workspace .workspace-app-card:hover {
+  border-color: rgba(125, 211, 252, 0.45);
+  box-shadow: 0 4px 14px rgba(6, 13, 24, 0.22);
+}
+
+.workspace .workspace-app-card:focus-visible {
+  outline: 2px solid var(--elva-focus);
+  outline-offset: 2px;
+}
+
+.workspace .workspace-app-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.workspace .workspace-app-card-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #f8fafc;
+  line-height: 1.25;
+}
+
+.workspace .workspace-app-badge {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  flex-shrink: 0;
+}
+
+.workspace .workspace-app-badge--status {
+  background: rgba(125, 211, 252, 0.15);
+  color: #bae6fd;
+}
+
+.workspace .workspace-app-card-desc {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #cbd5e1;
+  margin: 0 0 0.65rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.workspace .workspace-app-card-meta {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.workspace .workspace-app-card-meta strong {
+  color: #f1f5f9;
+}
+
+.workspace .workspace-app-card-footer {
+  margin-top: auto;
+  padding-top: 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--elva-accent);
+}
+
+.workspace .workspace-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  margin: 1rem 0 0.25rem;
+}
+
+.workspace .workspace-filter-bar input {
+  flex: 1 1 14rem;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+
+.workspace .workspace-status-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: var(--elva-on-surface-label);
+}
+
+.workspace .workspace-status-pill--pending {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.workspace .workspace-status-pill--approved {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.workspace .workspace-status-pill--rejected {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.workspace .workspace-request-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.workspace .workspace-request-card {
+  border: 1px solid #e2e8f0;
+  border-radius: var(--elva-radius);
+  padding: 1rem 1.1rem;
+  background: #fff;
+}
+
+.workspace .tab-nav .btn,
+.workspace .tab-nav button.secondary {
+  background: #fff;
+  color: var(--elva-on-surface);
+  border: 1px solid #cbd5e1;
+}
+
+.workspace .tab-nav button.secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  color: var(--elva-on-surface);
+  border-color: #94a3b8;
+}
+
+.workspace .tab-nav button:not(.secondary) {
+  background: var(--elva-navy-900);
+  color: #fff;
+  border: 1px solid var(--elva-navy-900);
+  box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.14);
+}
+
+.workspace .tab-nav button:not(.secondary):hover:not(:disabled) {
+  background: var(--elva-navy-800);
+  color: #fff;
+  border-color: var(--elva-navy-800);
+}
+
+.workspace .tab-nav button:focus-visible {
+  outline: 2px solid var(--elva-focus, #38bdf8);
+  outline-offset: 2px;
+}
+
+.workspace .tab-nav button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

@@ -11,6 +11,10 @@ import {
   validatePassword,
   validateTenantSlug,
 } from '../lib/validation';
+import { PageHeader } from '../components/ui/PageHeader';
+import { EmptyState } from '../components/ui/EmptyState';
+import { useVaultBaseDomain } from '../hooks/useVaultBaseDomain';
+import { buildTenantHostname } from '../lib/hostname';
 
 type TenantRow = {
   id: string;
@@ -38,6 +42,7 @@ const STATUS_CONFIRM: Record<Exclude<StatusAction, 'ACTIVE'>, { title: string; m
 export function PlatformPage() {
   const { me } = useAuth();
   const { push } = useToast();
+  const { baseDomain } = useVaultBaseDomain();
   const [tenants, setTenants] = useState<TenantRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -173,14 +178,16 @@ export function PlatformPage() {
   }
 
   return (
-    <div className="card">
-      <div className="page-header">
-        <div>
-          <h1>Platform — Tenants</h1>
-          <p className="muted">Create and manage tenants (no access to customer secret values).</p>
-        </div>
-        <button type="button" onClick={() => setCreateOpen(true)}>Create tenant</button>
-      </div>
+      <div className="workspace-page workspace-surface">
+      <PageHeader
+        title="Platform — Tenants"
+        description="Create and manage tenant workspaces. Platform operators cannot view customer secret values."
+        actions={
+          <button type="button" className="btn btn-primary" onClick={() => setCreateOpen(true)}>
+            Create tenant
+          </button>
+        }
+      />
 
       {error && <div className="error-banner">{error}</div>}
 
@@ -204,7 +211,15 @@ export function PlatformPage() {
       {loading ? (
         <p className="muted">Loading tenants…</p>
       ) : tenants.length === 0 ? (
-        <p className="muted">No tenants yet. Create your first tenant to get started.</p>
+        <EmptyState
+          title="No tenants yet"
+          description="Create your first tenant workspace to provision a dedicated hostname and business administrator."
+          action={
+            <button type="button" className="btn btn-primary" onClick={() => setCreateOpen(true)}>
+              Create tenant
+            </button>
+          }
+        />
       ) : (
         <div className="table-wrap">
           <table>
@@ -225,7 +240,11 @@ export function PlatformPage() {
                   </td>
                   <td>{t.slug}</td>
                   <td><span className={`status-pill status-${t.status.toLowerCase()}`}>{t.status}</span></td>
-                  <td className="mono">{t.primaryDomain}</td>
+                  <td className="mono">
+                    <a href={`https://${t.primaryDomain}`} target="_blank" rel="noreferrer">
+                      {t.primaryDomain}
+                    </a>
+                  </td>
                   <td>
                     <div className="action-row">
                       {t.status !== 'ACTIVE' && (
@@ -280,6 +299,11 @@ export function PlatformPage() {
               required
               placeholder="acme-corp"
             />
+            {form.slug.trim() && (
+              <span className="small-note mono">
+                Workspace: {buildTenantHostname(form.slug.trim(), baseDomain)}
+              </span>
+            )}
             {createErrors.slug && <span className="field-error">{createErrors.slug}</span>}
           </label>
           <label>

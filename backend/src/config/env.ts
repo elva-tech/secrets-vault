@@ -22,14 +22,22 @@ const envSchema = z.object({
   ENCRYPTION_PROVIDER: z.enum(['development', 'kms']).default('development'),
   AWS_REGION: z.string().optional(),
   AWS_KMS_KEY_ID: z.string().optional(),
-  OBJECT_STORAGE_PROVIDER: z.enum(['local', 's3']).default('local'),
+  OBJECT_STORAGE_PROVIDER: z.enum(['local', 's3', 'cloudinary']).default('local'),
   S3_BUCKET: z.string().optional(),
   S3_ENDPOINT: z.string().optional(),
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
+  NOTIFICATION_PROVIDER: z.enum(['log', 'elva_notify']).default('log'),
+  ELVA_NOTIFY_API_BASE: z.string().url().optional(),
+  /** @deprecated Use ELVA_NOTIFY_API_BASE */
+  ELVA_NOTIFY_BASE_URL: z.string().url().optional(),
+  ELVA_NOTIFY_APP_ID: z.string().min(1).optional(),
+  ELVA_NOTIFY_API_KEY: z.string().min(8).optional(),
+  ELVA_NOTIFY_BRAND_ID: z.string().min(1).optional(),
+  ELVA_NOTIFY_TIMEOUT_MS: z.coerce.number().default(15_000),
   VAULT_FILE_STORAGE_PATH: z.string().default('./data/vault-files'),
   VAULT_MAX_FILE_BYTES: z.coerce.number().default(10 * 1024 * 1024),
-  OTP_LENGTH: z.coerce.number().default(6),
-  OTP_TTL_SECONDS: z.coerce.number().default(600),
-  OTP_MAX_ATTEMPTS: z.coerce.number().default(5),
   ACCESS_GRANT_DEFAULT_MINUTES: z.coerce.number().default(60),
   JOB_WORKER_INTERVAL_MS: z.coerce.number().default(15000),
   EMAIL_FROM: z.string().email().optional(),
@@ -54,6 +62,59 @@ const envSchema = z.object({
       message: 'S3_BUCKET is required when OBJECT_STORAGE_PROVIDER=s3',
       path: ['S3_BUCKET'],
     });
+  }
+  if (data.OBJECT_STORAGE_PROVIDER === 'cloudinary') {
+    if (!data.CLOUDINARY_CLOUD_NAME) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'CLOUDINARY_CLOUD_NAME is required when OBJECT_STORAGE_PROVIDER=cloudinary',
+        path: ['CLOUDINARY_CLOUD_NAME'],
+      });
+    }
+    if (!data.CLOUDINARY_API_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'CLOUDINARY_API_KEY is required when OBJECT_STORAGE_PROVIDER=cloudinary',
+        path: ['CLOUDINARY_API_KEY'],
+      });
+    }
+    if (!data.CLOUDINARY_API_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'CLOUDINARY_API_SECRET is required when OBJECT_STORAGE_PROVIDER=cloudinary',
+        path: ['CLOUDINARY_API_SECRET'],
+      });
+    }
+  }
+  if (data.NODE_ENV === 'production' && data.NOTIFICATION_PROVIDER === 'log') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'NOTIFICATION_PROVIDER must be elva_notify in production',
+      path: ['NOTIFICATION_PROVIDER'],
+    });
+  }
+  if (data.NOTIFICATION_PROVIDER === 'elva_notify') {
+    if (!data.ELVA_NOTIFY_APP_ID) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'ELVA_NOTIFY_APP_ID is required for ELVA Notify',
+        path: ['ELVA_NOTIFY_APP_ID'],
+      });
+    }
+    if (!data.ELVA_NOTIFY_API_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'ELVA_NOTIFY_API_KEY is required for ELVA Notify',
+        path: ['ELVA_NOTIFY_API_KEY'],
+      });
+    }
+    if (!data.ELVA_NOTIFY_BRAND_ID) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'ELVA_NOTIFY_BRAND_ID is required when NOTIFICATION_PROVIDER=elva_notify',
+        path: ['ELVA_NOTIFY_BRAND_ID'],
+      });
+    }
   }
 });
 

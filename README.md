@@ -40,3 +40,7 @@ Open **tenant/platform hostnames**, not bare `localhost` — e.g. `http://elva.v
 ```bash
 npm run test
 ```
+
+## Integrations (ELVA Notify & Cloudinary)
+
+Server-only configuration for transactional email and encrypted file storage: see [backend/docs/INTEGRATIONS.md](backend/docs/INTEGRATIONS.md).

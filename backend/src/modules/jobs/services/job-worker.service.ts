@@ -7,6 +7,7 @@ import { VaultItemModel } from '../../vault/models/vault-item.model.js';
 import { AccessGrantModel } from '../../access-control/models/access-grant.model.js';
 import { OtpModel } from '../../access-control/models/otp.model.js';
 import { logger } from '../../../config/logger.js';
+import { NotificationDeliveryError } from '../../notifications/notification.types.js';
 
 export class JobWorkerService {
   private timer: ReturnType<typeof setInterval> | null = null;
@@ -41,7 +42,8 @@ export class JobWorkerService {
         await this.process(job);
         await this.queue.complete(job.id);
       } catch (err) {
-        await this.queue.fail(job.id, String(err));
+        const retryable = err instanceof NotificationDeliveryError ? err.retryable : true;
+        await this.queue.fail(job.id, String(err), retryable);
       }
     }
   }
@@ -66,7 +68,9 @@ export class JobWorkerService {
       return;
     }
     if (job.type === 'NOTIFICATION_DELIVERY') {
-      await this.notifications.send(job.payload as Parameters<NotificationService['send']>[0]);
+      await this.notifications.deliverPayload(
+        job.payload as Parameters<NotificationService['deliverPayload']>[0],
+      );
     }
   }
 

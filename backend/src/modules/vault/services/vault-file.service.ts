@@ -4,26 +4,13 @@ import type { EncryptedEnvelope } from '../encryption/encryption.types.js';
 import { loadEnv } from '../../../config/env.js';
 import { getEncryptionProvider } from '../encryption/encryption-provider.factory.js';
 import { getObjectStorageProvider } from '../files/object-storage.factory.js';
+import { buildApplicationVaultStorageKey } from '../files/storage-key.js';
 import { VaultFileRepository } from '../repositories/vault-file.repository.js';
 import { VaultScopeService } from './vault-scope.service.js';
 import { VaultDomainError } from './vault-domain.error.js';
 import { PolicyResourceType } from '@vault/shared';
 import { AccessPolicyService } from '../../access-control/services/access-policy.service.js';
-
-const ALLOWED_EXTENSIONS = new Set([
-  '.env',
-  '.pem',
-  '.key',
-  '.json',
-  '.yaml',
-  '.yml',
-  '.txt',
-  '.zip',
-  '.crt',
-  '.cer',
-  '.pfx',
-  '.p12',
-]);
+import { assertAllowedVaultUploadFilename } from '../files/vault-file-validation.js';
 
 export class VaultFileService {
   constructor(
@@ -50,7 +37,7 @@ export class VaultFileService {
     if (input.buffer.length > VAULT_MAX_FILE_BYTES) {
       throw new VaultDomainError('FILE_TOO_LARGE', 'File exceeds size limit');
     }
-    this.validateFilename(input.originalFilename, input.mimeType);
+    assertAllowedVaultUploadFilename(input.originalFilename, input.mimeType);
 
     const { environment, application } = await this.scope.assertEnvironmentInTenant(
       tenantId,
@@ -60,7 +47,12 @@ export class VaultFileService {
 
     const pendingId = new mongoose.Types.ObjectId();
     const fileId = pendingId.toString();
-    const storageKey = `${tenantId}/${application._id}/${environment._id}/${fileId}`;
+    const storageKey = buildApplicationVaultStorageKey({
+      tenantId,
+      applicationId: application._id.toString(),
+      environmentSlug: environment.slug,
+      fileId,
+    });
     const envelope = await this.encryption.encrypt(input.buffer.toString('base64'), {
       tenantId,
       resourceType: 'vault_file',
@@ -70,7 +62,9 @@ export class VaultFileService {
     await this.storage.putObject(storageKey, encryptedBlob);
     const envelopeMetadata = { ...envelope, ciphertext: '' };
 
-    const record = await this.files.create({
+    let record;
+    try {
+      record = await this.files.create({
       id: fileId,
       tenantId,
       applicationId: application._id.toString(),
@@ -84,6 +78,10 @@ export class VaultFileService {
       envelope: envelopeMetadata,
       createdBy: actorUserId,
     });
+    } catch (err) {
+      await this.storage.deleteObject(storageKey).catch(() => undefined);
+      throw err;
+    }
 
     await this.accessPolicies.ensureDefaultForResource(
       tenantId,
@@ -136,20 +134,6 @@ export class VaultFileService {
     await this.files.softDelete(fileId, tenantId, actorUserId);
     await this.storage.deleteObject(record.storageKey).catch(() => undefined);
     return { id: fileId, status: 'DELETED' };
-  }
-
-  private validateFilename(originalFilename: string, mimeType: string) {
-    const base = path.basename(originalFilename);
-    if (!base || base.includes('..') || base.includes('/') || base.includes('\\')) {
-      throw new VaultDomainError('INVALID_FILE', 'Invalid filename');
-    }
-    const ext = path.extname(base).toLowerCase();
-    if (!ALLOWED_EXTENSIONS.has(ext)) {
-      throw new VaultDomainError('INVALID_FILE', 'File type not allowed');
-    }
-    if (!mimeType || mimeType.length > 200) {
-      throw new VaultDomainError('INVALID_FILE', 'Invalid mime type');
-    }
   }
 
   private toPublic(record: {

@@ -101,14 +101,19 @@ export function createAuthRouter(): Router {
     }
   });
 
-  router.get('/me', requireSession, async (req, res, next) => {
+  router.get('/me', optionalSession, async (req, res, next) => {
     try {
-      const user = await users.findById(req.auth!.userId);
+      if (!req.auth) {
+        res.json({ authenticated: false });
+        return;
+      }
+      const user = await users.findById(req.auth.userId);
       if (!user) {
-        res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'User not found' } });
+        res.json({ authenticated: false });
         return;
       }
       const payload: Record<string, unknown> = {
+        authenticated: true,
         user: {
           id: user._id.toString(),
           email: user.email,

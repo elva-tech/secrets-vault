@@ -1,0 +1,246 @@
+/* Tenant hostname welcome portal — public, unauthenticated */
+
+.tw-page {
+  min-height: 100vh;
+  background: var(--elva-navy-950);
+  color: var(--elva-text);
+}
+
+.tw-header {
+  border-bottom: 1px solid var(--elva-border);
+  background: rgba(6, 13, 24, 0.94);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.tw-header-inner {
+  max-width: var(--elva-max);
+  margin: 0 auto;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tw-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tw-tenant-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.tw-header-copy h1 {
+  font-family: var(--elva-font-serif);
+  font-size: 1.15rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.tw-header-copy p {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: var(--elva-text-muted);
+}
+
+.tw-hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(30, 58, 95, 0.55), transparent),
+    linear-gradient(180deg, var(--elva-navy-800), var(--elva-navy-950));
+  padding: 3rem 0 4rem;
+}
+
+.tw-container {
+  max-width: var(--elva-max);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.tw-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .tw-hero-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tw-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  color: var(--elva-accent);
+  margin: 0 0 0.75rem;
+}
+
+.tw-headline {
+  font-family: var(--elva-font-serif);
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  line-height: 1.12;
+  margin: 0 0 1rem;
+}
+
+.tw-lead {
+  color: var(--elva-text-muted);
+  font-size: 1.05rem;
+  line-height: 1.65;
+  margin: 0 0 1.5rem;
+  max-width: 36rem;
+}
+
+.tw-hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.tw-preview {
+  background: rgba(15, 33, 55, 0.85);
+  border: 1px solid var(--elva-border);
+  border-radius: var(--elva-radius-lg);
+  padding: 1.25rem 1.5rem;
+}
+
+.tw-preview-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--elva-accent);
+  margin: 0 0 0.5rem;
+}
+
+.tw-env-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.tw-env-chip {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+.tw-section {
+  padding: 3.5rem 0;
+  border-top: 1px solid var(--elva-border);
+}
+
+.tw-section-title {
+  font-family: var(--elva-font-serif);
+  font-size: clamp(1.6rem, 2.5vw, 2.1rem);
+  margin: 0 0 0.5rem;
+}
+
+.tw-section-lead {
+  color: var(--elva-text-muted);
+  margin: 0 0 2rem;
+  max-width: 40rem;
+}
+
+.tw-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .tw-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .tw-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tw-step-num {
+  font-size: 0.75rem;
+  color: var(--elva-accent);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.tw-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--elva-border);
+}
+
+@media (max-width: 900px) {
+  .tw-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tw-feature {
+  padding: 1.15rem 1.25rem;
+  border-bottom: 1px solid var(--elva-border);
+  border-right: 1px solid var(--elva-border);
+}
+
+.tw-feature:nth-child(3n) {
+  border-right: none;
+}
+
+.tw-feature h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+}
+
+.tw-feature p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--elva-text-muted);
+}
+
+.tw-host-example {
+  font-family: ui-monospace, monospace;
+  color: var(--elva-accent);
+  font-size: 1rem;
+  margin: 1rem 0;
+}
+
+.tw-security-list {
+  color: var(--elva-text-muted);
+  line-height: 1.75;
+  padding-left: 1.1rem;
+  margin: 0;
+  max-width: 42rem;
+}
+
+.tw-footer {
+  border-top: 1px solid var(--elva-border);
+  padding: 1.75rem 0;
+  font-size: 0.85rem;
+  color: var(--elva-text-dim);
+  text-align: center;
+}
+
+.tw-footer a {
+  color: var(--elva-text-muted);
+}
+
+.tw-page .btn-primary {
+  color: var(--elva-navy-900);
+}

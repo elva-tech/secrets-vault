@@ -5,8 +5,6 @@ import type { Application } from 'express';
 import { NonOwnerBehavior, PolicyResourceType, TenantStatus, VaultItemType } from '@vault/shared';
 import { TenantAdminService } from '../modules/platform/services/tenant-admin.service.js';
 import { UserRepository } from '../modules/users/repositories/user.repository.js';
-import mongoose from 'mongoose';
-import { OtpModel } from '../modules/access-control/models/otp.model.js';
 import { NotificationService } from '../modules/notifications/notification.service.js';
 
 const BASE = 'vault.elvatech.in';
@@ -212,7 +210,7 @@ describe('Phase 4 — access control', () => {
       .send({ userAccess: [] });
   });
 
-  it('access request flow: approve, OTP verify, scoped grant reveal', async () => {
+  it('access request flow: portal approve grants access without OTP', async () => {
     const createReq = await request(app)
       .post('/api/access-requests')
       .set('X-Vault-Host', hostA)
@@ -240,38 +238,18 @@ describe('Phase 4 — access control', () => {
       .set('X-Vault-Host', hostA)
       .set('Cookie', cookieOwner);
     expect(approve.status).toBe(200);
+    expect(approve.body.request.status).toBe('APPROVED');
+    expect(approve.body.grant.status).toBe('ACTIVE');
 
     const notifications = (
       await request(app)
         .get('/api/test/notifications')
         .set('X-Vault-Host', hostA)
         .set('Cookie', cookieOwner)
-    ).body.notifications as Array<{ otpCode?: string }>;
-    const otp = notifications.find((n) => n.otpCode)?.otpCode;
-    expect(otp).toMatch(/^\d{6}$/);
-
-    const stored = await OtpModel.findOne({
-      accessRequestId: new mongoose.Types.ObjectId(requestId),
-    })
-      .select('+hashedCode')
-      .exec();
-    expect(stored?.hashedCode).toBeTruthy();
-    expect(stored?.hashedCode).not.toBe(otp);
-
-    const badOtp = await request(app)
-      .post(`/api/access-requests/${requestId}/verify-otp`)
-      .set('X-Vault-Host', hostA)
-      .set('Cookie', cookieEngineer)
-      .send({ code: '000000' });
-    expect(badOtp.status).toBe(400);
-
-    const verify = await request(app)
-      .post(`/api/access-requests/${requestId}/verify-otp`)
-      .set('X-Vault-Host', hostA)
-      .set('Cookie', cookieEngineer)
-      .send({ code: otp });
-    expect(verify.status).toBe(200);
-    expect(verify.body.grant.status).toBe('ACTIVE');
+    ).body.notifications as Array<{ event: string; otpCode?: string }>;
+    expect(notifications.some((n) => n.event === 'ACCESS_REQUESTED')).toBe(true);
+    expect(notifications.some((n) => n.event === 'ACCESS_APPROVED')).toBe(true);
+    expect(notifications.every((n) => !n.otpCode)).toBe(true);
 
     const reveal = await request(app)
       .post(`/api/vault/secrets/${secretId}/reveal`)
@@ -332,7 +310,7 @@ describe('Phase 4 — access control', () => {
     expect(dup.body.error.code).toBe('DUPLICATE_REQUEST');
   });
 
-  it('rejected request cannot verify OTP', async () => {
+  it('rejected request cannot be approved again', async () => {
     const rejectSecret = (
       await request(app)
         .post(`/api/vault/applications/${applicationId}/environments/${environmentId}/secrets`)
@@ -362,12 +340,11 @@ describe('Phase 4 — access control', () => {
       .post(`/api/access-requests/${requestId}/reject`)
       .set('X-Vault-Host', hostA)
       .set('Cookie', cookieOwner);
-    const verify = await request(app)
-      .post(`/api/access-requests/${requestId}/verify-otp`)
+    const approveAgain = await request(app)
+      .post(`/api/access-requests/${requestId}/approve`)
       .set('X-Vault-Host', hostA)
-      .set('Cookie', cookieEngineer)
-      .send({ code: '123456' });
-    expect(verify.status).toBe(400);
+      .set('Cookie', cookieOwner);
+    expect(approveAgain.status).toBe(400);
   });
 
   it('business admin non-owner still needs approval when policy requires it', async () => {
@@ -390,6 +367,243 @@ describe('Phase 4 — access control', () => {
       .set('Cookie', cookieOwner);
     expect(reveal.status).toBe(403);
     expect(reveal.body.error.code).toBe('APPROVAL_REQUIRED');
+  });
+
+  it('application manager can approve without being resource owner', async () => {
+    const managerRole = await request(app)
+      .post('/api/tenant/roles')
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieOwner)
+      .send({
+        name: 'AccessManagerP4',
+        permissionKeys: ['access.approve', 'access.reject', 'access.view'],
+      });
+    await request(app)
+      .post('/api/tenant/users')
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieOwner)
+      .send({
+        email: 'p4-manager@test.local',
+        password,
+        displayName: 'Manager',
+        roleIds: [managerRole.body.role.id],
+      });
+    const users = new UserRepository();
+    const manager = await users.findByEmail('p4-manager@test.local');
+    expect(manager).toBeTruthy();
+    await request(app)
+      .post(`/api/applications/${applicationId}/managers`)
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieOwner)
+      .send({ userId: manager!._id.toString() });
+
+    const cookieManager =
+      (
+        await request(app)
+          .post('/api/auth/tenant/login')
+          .set('X-Vault-Host', hostA)
+          .send({ email: 'p4-manager@test.local', password })
+      ).headers['set-cookie']?.[0]?.split(';')[0] ?? '';
+
+    const mgrSecret = (
+      await request(app)
+        .post(`/api/vault/applications/${applicationId}/environments/${environmentId}/secrets`)
+        .set('X-Vault-Host', hostA)
+        .set('Cookie', cookieOwner)
+        .send({
+          name: 'MANAGER_APPROVE_SECRET',
+          type: VaultItemType.TEXT,
+          value: { value: 'mgr-flow' },
+        })
+    ).body.secret.id;
+
+    const createReq = await request(app)
+      .post('/api/access-requests')
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieEngineer)
+      .send({
+        applicationId,
+        environmentId,
+        resourceType: 'SECRET',
+        resourceIds: [mgrSecret],
+        permissions: ['secret.reveal'],
+        reason: 'Manager approval path',
+      });
+    const requestId = createReq.body.request.id;
+
+    const ownerApproveDenied = await request(app)
+      .post(`/api/access-requests/${requestId}/approve`)
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieEngineer);
+    expect(ownerApproveDenied.status).toBe(403);
+
+    const managerApprove = await request(app)
+      .post(`/api/access-requests/${requestId}/approve`)
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieManager);
+    expect(managerApprove.status).toBe(200);
+    expect(managerApprove.body.grant.status).toBe('ACTIVE');
+  });
+
+  it('OTP verification route is removed', async () => {
+    const res = await request(app)
+      .post('/api/access-requests/507f1f77bcf86cd799439011/verify-otp')
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieEngineer)
+      .send({ code: '123456' });
+    expect(res.status).toBe(404);
+  });
+
+  it('allows access request for multiple resources with the same owner', async () => {
+    const secretA = (
+      await request(app)
+        .post(`/api/vault/applications/${applicationId}/environments/${environmentId}/secrets`)
+        .set('X-Vault-Host', hostA)
+        .set('Cookie', cookieOwner)
+        .send({
+          name: 'MULTI_OWNER_A',
+          type: VaultItemType.TEXT,
+          value: { value: 'a' },
+        })
+    ).body.secret.id;
+    const secretB = (
+      await request(app)
+        .post(`/api/vault/applications/${applicationId}/environments/${environmentId}/secrets`)
+        .set('X-Vault-Host', hostA)
+        .set('Cookie', cookieOwner)
+        .send({
+          name: 'MULTI_OWNER_B',
+          type: VaultItemType.TEXT,
+          value: { value: 'b' },
+        })
+    ).body.secret.id;
+
+    const res = await request(app)
+      .post('/api/access-requests')
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieEngineer)
+      .send({
+        applicationId,
+        environmentId,
+        resourceType: 'SECRET',
+        resourceIds: [secretA, secretB],
+        permissions: ['secret.reveal'],
+        reason: 'Same owner bundle',
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.request.resourceIds).toHaveLength(2);
+  });
+
+  it('rejects mixed-owner resource bundle without creating a request', async () => {
+    NotificationService.clearTestNotifications();
+    const engineerSecret = (
+      await request(app)
+        .post(`/api/vault/applications/${applicationId}/environments/${environmentId}/secrets`)
+        .set('X-Vault-Host', hostA)
+        .set('Cookie', cookieOwner)
+        .send({
+          name: 'MIXED_OWNER_ENGINEER',
+          type: VaultItemType.TEXT,
+          ownerId: engineerUserId,
+          value: { value: 'eng' },
+        })
+    ).body.secret.id;
+    const ownerSecret = (
+      await request(app)
+        .post(`/api/vault/applications/${applicationId}/environments/${environmentId}/secrets`)
+        .set('X-Vault-Host', hostA)
+        .set('Cookie', cookieOwner)
+        .send({
+          name: 'MIXED_OWNER_ADMIN',
+          type: VaultItemType.TEXT,
+          value: { value: 'own' },
+        })
+    ).body.secret.id;
+
+    const res = await request(app)
+      .post('/api/access-requests')
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieEngineer)
+      .send({
+        applicationId,
+        environmentId,
+        resourceType: 'SECRET',
+        resourceIds: [engineerSecret, ownerSecret],
+        permissions: ['secret.reveal'],
+        reason: 'Mixed owners',
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('MIXED_RESOURCE_OWNERS');
+
+    const drained = NotificationService.drainTestNotifications();
+    expect(drained).toHaveLength(0);
+  });
+
+  it('denies approve/reject for user with access.approve but not owner or manager', async () => {
+    const approverRole = await request(app)
+      .post('/api/tenant/roles')
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieOwner)
+      .send({
+        name: 'ApproverOnlyP4',
+        permissionKeys: ['access.approve', 'access.reject', 'access.view'],
+      });
+    await request(app)
+      .post('/api/tenant/users')
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieOwner)
+      .send({
+        email: 'p4-approver-only@test.local',
+        password,
+        displayName: 'ApproverOnly',
+        roleIds: [approverRole.body.role.id],
+      });
+    const cookieApproverOnly =
+      (
+        await request(app)
+          .post('/api/auth/tenant/login')
+          .set('X-Vault-Host', hostA)
+          .send({ email: 'p4-approver-only@test.local', password })
+      ).headers['set-cookie']?.[0]?.split(';')[0] ?? '';
+
+    const targetSecret = (
+      await request(app)
+        .post(`/api/vault/applications/${applicationId}/environments/${environmentId}/secrets`)
+        .set('X-Vault-Host', hostA)
+        .set('Cookie', cookieOwner)
+        .send({
+          name: 'APPROVER_ONLY_TARGET',
+          type: VaultItemType.TEXT,
+          value: { value: 'target' },
+        })
+    ).body.secret.id;
+
+    const createReq = await request(app)
+      .post('/api/access-requests')
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieEngineer)
+      .send({
+        applicationId,
+        environmentId,
+        resourceType: 'SECRET',
+        resourceIds: [targetSecret],
+        permissions: ['secret.reveal'],
+        reason: 'Approver-only denial test',
+      });
+    expect(createReq.status).toBe(201);
+    const requestId = createReq.body.request.id;
+
+    const approve = await request(app)
+      .post(`/api/access-requests/${requestId}/approve`)
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieApproverOnly);
+    expect(approve.status).toBe(403);
+
+    const reject = await request(app)
+      .post(`/api/access-requests/${requestId}/reject`)
+      .set('X-Vault-Host', hostA)
+      .set('Cookie', cookieApproverOnly);
+    expect(reject.status).toBe(403);
   });
 
   it('access responses never include secret plaintext', async () => {

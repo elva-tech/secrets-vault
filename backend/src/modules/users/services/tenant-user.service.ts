@@ -3,6 +3,7 @@ import { UserRepository } from '../repositories/user.repository.js';
 import { TenantMembershipRepository } from '../../tenant/repositories/tenant-membership.repository.js';
 import { PasswordService } from '../../auth/services/password.service.js';
 import { RoleRepository } from '../../roles/repositories/role.repository.js';
+import { NotificationService } from '../../notifications/notification.service.js';
 
 export class TenantUserService {
   constructor(
@@ -10,6 +11,7 @@ export class TenantUserService {
     private readonly memberships = new TenantMembershipRepository(),
     private readonly passwords = new PasswordService(),
     private readonly roles = new RoleRepository(),
+    private readonly notifications = new NotificationService(),
   ) {}
 
   async listUsers(trustedTenantId: string) {
@@ -70,6 +72,15 @@ export class TenantUserService {
       userId: user._id.toString(),
       roleIds: input.roleIds,
       status: MembershipStatus.ACTIVE,
+    });
+
+    await this.notifications.send({
+      event: 'TENANT_USER_ADDED',
+      tenantId: trustedTenantId,
+      toUserId: user._id.toString(),
+      subject: 'Workspace access granted',
+      body: 'You have been added to a Secrets Vault workspace. Sign in with your tenant hostname to get started.',
+      correlationId: user._id.toString(),
     });
 
     return {

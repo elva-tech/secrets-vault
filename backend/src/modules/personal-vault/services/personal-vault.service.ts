@@ -4,14 +4,14 @@ import { VaultItemType } from '@vault/shared';
 import { getEncryptionProvider } from '../../vault/encryption/encryption-provider.factory.js';
 import type { EncryptedEnvelope } from '../../vault/encryption/encryption.types.js';
 import { getObjectStorageProvider } from '../../vault/files/object-storage.factory.js';
+import { buildPersonalVaultStorageKey } from '../../vault/files/storage-key.js';
 import { VaultItemRepository } from '../../vault/repositories/vault-item.repository.js';
 import { SecretVersionRepository } from '../../vault/repositories/secret-version.repository.js';
 import { VaultFileRepository } from '../../vault/repositories/vault-file.repository.js';
 import { VaultDomainError } from '../../vault/services/vault-domain.error.js';
 import type { SecretValueInput } from '../../vault/services/vault-secret.service.js';
 import { loadEnv } from '../../../config/env.js';
-
-const ALLOWED_EXTENSIONS = new Set(['.env', '.pem', '.key', '.json', '.yaml', '.yml', '.txt', '.zip', '.crt']);
+import { assertAllowedVaultUploadFilename } from '../../vault/files/vault-file-validation.js';
 
 export class PersonalVaultService {
   constructor(
@@ -121,17 +121,23 @@ export class PersonalVaultService {
     if (input.buffer.length > VAULT_MAX_FILE_BYTES) {
       throw new VaultDomainError('FILE_TOO_LARGE', 'File exceeds size limit');
     }
-    this.validateFilename(input.originalFilename, input.mimeType);
+    assertAllowedVaultUploadFilename(input.originalFilename, input.mimeType);
     const pendingId = new mongoose.Types.ObjectId();
     const fileId = pendingId.toString();
-    const storageKey = `${tenantId}/personal/${ownerId}/${fileId}`;
+    const storageKey = buildPersonalVaultStorageKey({
+      tenantId,
+      userId: ownerId,
+      fileId,
+    });
     const envelope = await this.encryption.encrypt(input.buffer.toString('base64'), {
       tenantId,
       resourceType: 'personal_file',
       resourceId: fileId,
     });
     await this.storage.putObject(storageKey, Buffer.from(envelope.ciphertext, 'base64'));
-    const record = await this.files.createPersonal({
+    let record;
+    try {
+      record = await this.files.createPersonal({
       id: fileId,
       tenantId,
       name: input.name,
@@ -143,6 +149,10 @@ export class PersonalVaultService {
       envelope: { ...envelope, ciphertext: '' },
       createdBy: ownerId,
     });
+    } catch (err) {
+      await this.storage.deleteObject(storageKey).catch(() => undefined);
+      throw err;
+    }
     return this.toFileList(record);
   }
 
@@ -231,14 +241,6 @@ export class PersonalVaultService {
       return { username: parsed.username, password: parsed.password };
     }
     return { value: parsed.value };
-  }
-
-  private validateFilename(originalFilename: string, mimeType: string) {
-    const base = path.basename(originalFilename);
-    if (!base || base.includes('..')) throw new VaultDomainError('INVALID_FILE', 'Invalid filename');
-    const ext = path.extname(base).toLowerCase();
-    if (!ALLOWED_EXTENSIONS.has(ext)) throw new VaultDomainError('INVALID_FILE', 'File type not allowed');
-    if (!mimeType || mimeType.length > 200) throw new VaultDomainError('INVALID_FILE', 'Invalid mime type');
   }
 
   private toSecretList(item: {

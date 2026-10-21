@@ -52,7 +52,22 @@ export class JobQueueService {
     );
   }
 
-  async fail(jobId: string, message: string): Promise<void> {
+  async fail(jobId: string, message: string, retryable = true): Promise<void> {
+    const job = await BackgroundJobModel.findById(jobId).exec();
+    if (!job) return;
+    const maxAttempts = 5;
+    if (retryable && job.attempts < maxAttempts) {
+      const delayMs = Math.min(300_000, 15_000 * job.attempts);
+      await BackgroundJobModel.updateOne(
+        { _id: jobId },
+        {
+          status: JobStatus.PENDING,
+          runAt: new Date(Date.now() + delayMs),
+          lastError: message,
+        },
+      );
+      return;
+    }
     await BackgroundJobModel.updateOne(
       { _id: jobId },
       { status: JobStatus.FAILED, lastError: message },

@@ -58,6 +58,17 @@ export class ApplicationMemberRepository {
     return result.deletedCount > 0;
   }
 
+  async listManagedApplicationIds(tenantId: string, userId: string): Promise<string[]> {
+    const rows = await ApplicationMemberModel.find({
+      tenantId: new mongoose.Types.ObjectId(tenantId),
+      userId: new mongoose.Types.ObjectId(userId),
+      role: ApplicationMemberRole.MANAGER,
+    })
+      .select('applicationId')
+      .exec();
+    return rows.map((r) => r.applicationId.toString());
+  }
+
   async countOwners(applicationId: string, tenantId: string): Promise<number> {
     return ApplicationMemberModel.countDocuments({
       tenantId: new mongoose.Types.ObjectId(tenantId),

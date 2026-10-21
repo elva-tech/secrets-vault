@@ -213,7 +213,8 @@ describe('Phase 1 security suite', () => {
       .get('/api/auth/me')
       .set(hostHeader(tenantAHost))
       .set('Cookie', `${SESSION_COOKIE_NAME}=not-a-real-session`);
-    expect(bad.status).toBe(401);
+    expect(bad.status).toBe(200);
+    expect(bad.body.authenticated).toBe(false);
 
     const freshLogin = await request(app)
       .post('/api/auth/tenant/login')

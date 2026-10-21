@@ -1,53 +1,54 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { apiFetch } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
-
-function isBareLocalHost(hostname: string): boolean {
-  return hostname === 'localhost' || hostname === '127.0.0.1';
-}
+import { ElvaLogo } from '../components/brand/ElvaLogo';
+import { classifyHostname, isBareLocalHost } from '../lib/hostname';
+import { useVaultBaseDomain } from '../hooks/useVaultBaseDomain';
+import { UnavailableWorkspacePage } from './UnavailableWorkspacePage';
 
 export function LoginPage() {
   const { refresh, me } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { baseDomain, loading: configLoading } = useVaultBaseDomain();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<'tenant' | 'platform'>('tenant');
   const [error, setError] = useState<string | null>(null);
-  const [baseDomain, setBaseDomain] = useState('vault.localhost');
+  const [submitting, setSubmitting] = useState(false);
   const [hostHint, setHostHint] = useState<string | null>(null);
 
   const port = window.location.port ? `:${window.location.port}` : '';
+  const sessionExpired = searchParams.get('session-expired') === '1';
 
   useEffect(() => {
-    void apiFetch<{ baseDomain: string }>('/api/config/public')
-      .then((r) => {
-        setBaseDomain(r.baseDomain);
-        const h = window.location.hostname.toLowerCase();
-        const base = r.baseDomain.toLowerCase();
-        if (h === base || h === `www.${base}`) {
-          setMode('platform');
-        } else if (h.endsWith(`.${base}`)) {
-          setMode('tenant');
-        }
-      })
-      .catch(() => {
-        /* use defaults */
-      });
-  }, []);
+    if (configLoading) return;
+    const h = window.location.hostname.toLowerCase();
+    const base = baseDomain.toLowerCase();
+    const ctx = classifyHostname(h, base);
+    if (ctx === 'platform') setMode('platform');
+    else if (ctx === 'tenant') setMode('tenant');
+  }, [baseDomain, configLoading]);
 
   useEffect(() => {
     if (isBareLocalHost(window.location.hostname)) {
       setHostHint(
-        `Use http://${baseDomain}${port} for Super Admin or http://{tenant-slug}.${baseDomain}${port} for a tenant (e.g. elva.${baseDomain}).`,
+        `Use http://${baseDomain}${port} for platform admin or http://{tenant-slug}.${baseDomain}${port} for a tenant workspace.`,
       );
     } else {
       setHostHint(null);
     }
   }, [baseDomain, port]);
 
-  if (me) {
-    navigate('/', { replace: true });
+  useEffect(() => {
+    if (me) {
+      navigate(mode === 'platform' ? '/platform' : '/tenant', { replace: true });
+    }
+  }, [me, mode, navigate]);
+
+  if (!configLoading && classifyHostname(window.location.hostname, baseDomain) === 'invalid') {
+    return <UnavailableWorkspacePage />;
   }
 
   async function onSubmit(e: FormEvent) {
@@ -57,6 +58,7 @@ export function LoginPage() {
       setError('Open the app using your platform or tenant hostname URL (see note below), not localhost.');
       return;
     }
+    setSubmitting(true);
     try {
       const path =
         mode === 'platform' ? '/api/auth/platform/login' : '/api/auth/tenant/login';
@@ -67,57 +69,89 @@ export function LoginPage() {
       const session = await refresh();
       if (!session) {
         setError(
-          'Signed in but session was not saved. Use same-origin API (remove VITE_API_BASE_URL on Vercel and redeploy) or set SESSION_COOKIE_SAMESITE=none on Render.',
+          'Signed in but session was not saved. Use same-origin /api or set SESSION_COOKIE_SAMESITE=none on the API when using a split deploy.',
         );
         return;
       }
       navigate(mode === 'platform' ? '/platform' : '/tenant', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setSubmitting(false);
     }
   }
 
+  const isPlatform = mode === 'platform';
+
   return (
-    <div className="shell-main">
-      <div className="card">
-        <h1>Sign in</h1>
-        <p className="muted">
-          Context is resolved from the site hostname (platform vs tenant). One deployment serves all tenants.
-        </p>
-        {hostHint && (
-          <div className="error-banner" style={{ background: '#fffbeb', color: '#78350f', borderColor: '#fde68a' }}>
-            {hostHint}
-          </div>
-        )}
-        {error && <div className="error-banner">{error}</div>}
-        <form className="form" onSubmit={(e) => void onSubmit(e)}>
-          <label>
-            Mode
-            <select
-              value={mode}
-              onChange={(e) => setMode(e.target.value as 'tenant' | 'platform')}
-            >
-              <option value="tenant">Tenant (Business Admin)</option>
-              <option value="platform">Platform (Super Admin)</option>
-            </select>
-          </label>
-          <label>
-            Email
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
-          </label>
-          <label>
-            Password
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              required
-              minLength={8}
-            />
-          </label>
-          <button type="submit">Sign in</button>
-        </form>
+    <div className="auth-layout">
+      <div className="auth-layout-body">
+        <div className="auth-layout-brand">
+          <ElvaLogo
+            variant="light"
+            subtitle={isPlatform ? 'Platform Administration' : 'Workspace sign in'}
+            to="/"
+          />
+          <p className="auth-layout-tagline">Secure secrets. Controlled access.</p>
+        </div>
+        <div className="auth-panel card card--auth surface-light">
+          <h1>{isPlatform ? 'Platform Sign In' : 'Workspace Sign In'}</h1>
+          <p className="muted">
+            {isPlatform
+              ? 'Sign in with your platform administrator credentials.'
+              : 'Sign in with your tenant account for this workspace hostname.'}
+          </p>
+          {sessionExpired && (
+            <div className="banner banner--warn">Your session ended. Please sign in again.</div>
+          )}
+          {hostHint && <div className="banner banner--warn">{hostHint}</div>}
+          {error && <div className="error-banner">{error}</div>}
+          <form className="form form-auth" onSubmit={(e) => void onSubmit(e)}>
+            {isBareLocalHost(window.location.hostname) && (
+              <label>
+                Mode
+                <select
+                  value={mode}
+                  onChange={(e) => setMode(e.target.value as 'tenant' | 'platform')}
+                >
+                  <option value="tenant">Tenant (Business Admin)</option>
+                  <option value="platform">Platform (Super Admin)</option>
+                </select>
+              </label>
+            )}
+            <label>
+              Email
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                autoComplete="email"
+                required
+              />
+            </label>
+            <label>
+              Password
+              <input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                autoComplete="current-password"
+                required
+                minLength={8}
+              />
+            </label>
+            <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
+              {submitting ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+          <p className="auth-back">
+            <Link to="/">← Back to website</Link>
+          </p>
+        </div>
       </div>
+      <footer className="auth-footer">
+        <p>© {new Date().getFullYear()} Secrets Vault by ELVA · An ELVA Tech product</p>
+      </footer>
     </div>
   );
 }

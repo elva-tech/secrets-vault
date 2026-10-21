@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { apiFetch } from '../api/client';
 
 export type MeResponse = {
+  authenticated: true;
   user: {
     id: string;
     email: string;
@@ -33,7 +34,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const data = await apiFetch<MeResponse>('/api/auth/me');
+      const data = await apiFetch<MeResponse | { authenticated: false }>('/api/auth/me');
+      if (!data || data.authenticated !== true) {
+        setMe(null);
+        return null;
+      }
       setMe(data);
       return data;
     } catch {

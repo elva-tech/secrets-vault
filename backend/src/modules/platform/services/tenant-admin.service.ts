@@ -20,13 +20,17 @@ export class TenantAdminService {
 
   async listTenants() {
     const tenants = await this.tenants.listAll();
-    return tenants.map((t) => this.toPublic(t));
+    await Promise.all(tenants.map((t) => this.reconcilePrimaryDomain(t)));
+    const refreshed = await this.tenants.listAll();
+    return refreshed.map((t) => this.toPublic(t));
   }
 
   async getTenantById(id: string) {
     const tenant = await this.tenants.findById(id);
     if (!tenant) return null;
-    return this.toPublic(tenant);
+    await this.reconcilePrimaryDomain(tenant);
+    const updated = await this.tenants.findById(id);
+    return this.toPublic(updated ?? tenant);
   }
 
   async createTenant(input: {
@@ -91,6 +95,19 @@ export class TenantAdminService {
     return this.toPublic(updated);
   }
 
+  /** Keep stored domain in sync when VAULT_BASE_DOMAIN changes (e.g. localhost → production). */
+  private async reconcilePrimaryDomain(tenant: {
+    _id: { toString(): string };
+    slug: string;
+    primaryDomain: string;
+  }): Promise<void> {
+    const canonical = this.hostnameResolver.buildTenantHostname(tenant.slug);
+    if (tenant.primaryDomain !== canonical) {
+      await this.tenants.updateById(tenant._id.toString(), { primaryDomain: canonical });
+      tenant.primaryDomain = canonical;
+    }
+  }
+
   private toPublic(tenant: {
     _id: { toString(): string };
     name: string;
@@ -107,7 +124,7 @@ export class TenantAdminService {
       name: tenant.name,
       slug: tenant.slug,
       status: tenant.status,
-      primaryDomain: tenant.primaryDomain,
+      primaryDomain: this.hostnameResolver.buildTenantHostname(tenant.slug),
       plan: tenant.plan,
       settings: tenant.settings ?? {},
       createdAt: tenant.createdAt,

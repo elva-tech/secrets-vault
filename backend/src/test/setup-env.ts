@@ -7,6 +7,5 @@ process.env.SESSION_TTL_SECONDS = '3600';
 process.env.VAULT_ENCRYPTION_MASTER_KEY = 'dGVzdC1tYXN0ZXIta2V5LTMyLWJ5dGVzLWxlbmd0aCE=';
 process.env.VAULT_FILE_STORAGE_PATH = './data/vault-files-test';
 process.env.VAULT_MAX_FILE_BYTES = '1048576';
-process.env.OTP_TTL_SECONDS = '600';
-process.env.OTP_MAX_ATTEMPTS = '5';
 process.env.ACCESS_GRANT_DEFAULT_MINUTES = '60';
+process.env.NOTIFICATION_PROVIDER = 'log';
